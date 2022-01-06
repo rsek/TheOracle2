@@ -1,0 +1,24 @@
+{
+  "Strings": {
+    "Roll": "Roll",
+    "ActionRoll": "Action Roll",
+    "ProgressRoll": "Progress Roll",
+    "Score": "Score",
+    "ActionScore": "Action Score",
+    "ProgressScore": "Progress Score",
+    "and": "and",
+    "MissWithAMatch": "Miss with a Match",
+    "Miss": "Miss",
+    "MissImageURL": "https://i.imgur.com/3bAS1Rx.png",
+    "StrongHitWithAMatch": "Strong Hit with a Match",
+    "OverMaxMessage": "The action score is never greater than 10—anything over that is ignored (see p. 28).",
+    "MomentumCancelMessage": "Your action die was canceled by your negative momentum (see p. 34).",
+    "StrongHit": "Strong Hit",
+    "StrongHitImageURL": "https://i.imgur.com/yQeM5dI.png",
+    "VS": "vs.",
+    "WeakHit": "Weak Hit",
+    "WeakHitImageURL": "https://i.imgur.com/xrKLiNC.png",
+    "WeakHitWithAMatch": "Weak Hit with a Match",
+    "MomentumBurnMessage": "You may burn +{0} momentum for a {1} (see p. 32)."
+  }
+}
