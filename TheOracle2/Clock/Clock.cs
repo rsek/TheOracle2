@@ -4,33 +4,33 @@ public abstract class Clock : IClock
 {
   protected Clock(Embed embed)
   {
-    Text = embed.Title;
+    Title = embed.Title;
     string[] clockString = embed.Description.Split("/");
     Filled = int.Parse(clockString[0]);
     Segments = int.Parse(clockString[1]);
   }
   protected Clock(EmbedField embedField)
   {
-    Text = embedField.Name.Replace(ClockType + ": ", "");
+    // Title = embedField.Name.Replace(EmbedCategory + ": ", "");
     string[] clockString = embedField.Value.Split("/");
     Filled = int.Parse(clockString[0]);
     Segments = int.Parse(clockString[1]);
   }
-  protected Clock(ClockSize segments = (ClockSize)6, int filledSegments = 0, string text = "")
+  protected Clock(ClockSize segments = (ClockSize)6, int filledSegments = 0, string title = "")
   {
     if (filledSegments < 0 || filledSegments > ((int)segments))
     {
       throw new ArgumentOutOfRangeException(nameof(filledSegments), "filledSegments can't exceed segments");
     }
-    Text = text;
+    Title = title;
     Segments = (int)segments;
     Filled = filledSegments;
   }
-
   public int Segments { get; }
   public int Filled { get; set; }
-  public string Text { get; set; }
-  public abstract string ClockType { get; }
+  public string Title { get; set; }
+  public string Description { get; set; }
+  public abstract string EmbedCategory { get; }
   public bool IsFull => Filled >= Segments;
   public override string ToString()
   {
@@ -39,8 +39,8 @@ public abstract class Clock : IClock
   public virtual EmbedBuilder ToEmbed()
   {
     return new EmbedBuilder()
-      .WithAuthor(ClockType)
-      .WithTitle(Text)
+      .WithAuthor(EmbedCategory)
+      .WithTitle(Title)
       .WithDescription(ToString())
       .WithThumbnailUrl(
         IClock.Images[Segments][Filled])
@@ -51,7 +51,8 @@ public abstract class Clock : IClock
   public virtual EmbedFieldBuilder ToEmbedField()
   {
     return new EmbedFieldBuilder()
-    .WithName($"{ClockType}: {Text}")
+    // .WithName($"{EmbedCategory}: {Title}")
+    .WithName("Clock")
     .WithValue(ToString());
   }
   public EmbedBuilder AlertEmbed()
@@ -59,7 +60,7 @@ public abstract class Clock : IClock
     EmbedBuilder embed = new EmbedBuilder().WithThumbnailUrl(
       IClock.Images[Segments][Filled])
     .WithColor(IClock.ColorRamp[Segments][Filled])
-    .WithAuthor($"{ClockType}: {Text}")
+    .WithAuthor($"{EmbedCategory}: {Title}")
     .WithTitle(IsFull ? "The clock fills!" : $"The clock advances to {ToString()}");
     if (IsFull)
     {
@@ -67,7 +68,6 @@ public abstract class Clock : IClock
     }
     return embed;
   }
-
   public virtual string FillMessage { get; set; }
   public ButtonBuilder AdvanceButton(string customId = "clock-advance")
   {

@@ -97,7 +97,7 @@ public class ClockComponents : InteractionModuleBase<SocketInteractionContext<So
     string optionValue = values.FirstOrDefault();
     if (int.TryParse(optionValue.Replace("advance-", ""), out int odds))
     {
-      OracleAnswer answer = new(random, odds, $"Does the clock *{clock.Text}* advance?");
+      OracleAnswer answer = new(random, odds, $"Does the clock *{clock.Title}* advance?");
       EmbedBuilder answerEmbed = answer.ToEmbed();
       if (answer.IsYes)
       {

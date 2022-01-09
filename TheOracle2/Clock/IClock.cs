@@ -9,8 +9,9 @@ public interface IClock
   public string FillMessage { get; set; }
   public int Segments { get; }
   public int Filled { get; set; }
-  public string Text { get; set; }
-  public string ClockType { get; }
+  public string Title { get; set; }
+  public string Description { get; set; }
+  public string EmbedCategory { get; }
   public bool IsFull => Filled >= Segments;
   public static string AdvanceLabel => "Advance Clock";
   public ComponentBuilder MakeComponents();

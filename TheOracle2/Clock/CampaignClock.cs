@@ -4,7 +4,7 @@ public class CampaignClock : Clock
   public CampaignClock(Embed embed) : base(embed) { }
   public CampaignClock(EmbedField embedField) : base(embedField) { }
   public CampaignClock(ClockSize segments, int filledSegments, string text) : base(segments, filledSegments, text) { }
-  public override string ClockType => "Campaign Clock";
+  public override string EmbedCategory => "Campaign Clock";
   public override string FillMessage => "The event is triggered or the project is complete. Envision the outcome and the impact on your setting.";
 
   private static SelectMenuOptionBuilder AdvanceSelectMenuOption(int odds, string label, IEmote emoji)
