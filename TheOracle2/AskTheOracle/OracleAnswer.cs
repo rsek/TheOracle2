@@ -2,7 +2,7 @@ namespace TheOracle2.GameObjects;
 
 public class OracleAnswer : Die
 {
-  public OracleAnswer(int odds, string question) : base(100)
+  public OracleAnswer(Random random, int odds, string question) : base(random, 100)
   {
     if (odds is < 1 or > 99) { throw new ArgumentOutOfRangeException(nameof(odds), "Chance must be from 1 to 99, inclusive."); }
     Question = question;
@@ -50,7 +50,7 @@ public class OracleAnswer : Die
 
   public EmbedBuilder ToEmbed()
   {
-    string authorString = $"Ask the Oracle: {OracleAnswer.OddsString[Odds]}";
+    string authorString = $"Ask the Oracle: {OddsString[Odds]}";
     string footerString = IsMatch ? MatchMessage : "";
     return new EmbedBuilder()
     .WithAuthor(authorString)
