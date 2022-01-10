@@ -9,6 +9,7 @@ public interface IProgressTrack
   public int Ticks { get; set; }
   public int Score => (int)(Ticks / 4);
   public ComponentBuilder MakeComponents();
+  public ProgressRoll Resolve(Random random);
   public string EmbedCategory { get; }
   public string ProgressScoreString { get; }
   public static EmbedBuilder ToEmbed(string embedCategory, ChallengeRank rank, string title, string progressScoreString, int ticks)
@@ -18,16 +19,21 @@ public interface IProgressTrack
     .WithTitle(title)
     .WithFields(ToEmbedField(progressScoreString, ticks));
   }
-  public static EmbedFieldBuilder ToEmbedField(string progressScoreString, int ticks)
+  public static EmbedFieldBuilder ToEmbedField(string progressScoreString, int ticks, ChallengeRank challengeRank)
   {
     return new EmbedFieldBuilder()
-      .WithName($"Progress [{progressScoreString}]")
+      .WithName($"*{challengeRank}* Progress Track [{progressScoreString}]")
       .WithValue(TicksToEmoji(ticks))
       .WithIsInline(true);
   }
+
+  public static IProgressTrack FromField(EmbedField embedField)
+  {
+
+  }
   public static IProgressTrack FromEmbed(Embed embed)
   {
-    EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Progress ["));
+    EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Progress Track ["));
     int ticks = EmojiToTicks(progressField.Value);
     string[] toParse = embed.Author.ToString().Split(": ");
     var progressType = toParse[0];
@@ -71,7 +77,7 @@ public interface IProgressTrack
       emojiBar = emojiBar.Replace(emoji, index.ToString());
       index++;
     }
-    IEnumerable<int> values = emojiBar.Split(" ").Cast<int>();
+    IEnumerable<int> values = emojiBar.Split(" ").Select(item => int.Parse(item));
     return values.Sum();
   }
   public static string TicksToEmoji(int ticks)
@@ -81,8 +87,8 @@ public interface IProgressTrack
     string fill = new('4', score);
     string finalTickMark = (remainder == 0) ? string.Empty : remainder.ToString();
     fill = (fill + finalTickMark).PadRight(10, '0');
-    var boxValues = fill.ToCharArray().Cast<int>();
-    var emojiStrings = boxValues.Select<int, string>(box => BarEmoji[box]);
+    var boxValues = fill.ToCharArray().Select(item => item.ToString());
+    var emojiStrings = boxValues.Select(box => BarEmoji[int.Parse(box)]);
     fill = String.Join(" ", emojiStrings);
     fill += "\u200C"; //special hidden character for mobile formatting small emojis
     return fill;
@@ -92,38 +98,106 @@ public interface IProgressTrack
     return new ButtonBuilder()
       .WithLabel("Roll progress")
       .WithStyle(ButtonStyle.Success)
+      .WithCustomId($"progress-roll:{score}")
       .WithEmote(new Emoji("🎲"))
-      .WithCustomId($"progress-resolve:{score}")
     ;
+  }
+
+  public static SelectMenuOptionBuilder ResolveOption(int score)
+  {
+    return new SelectMenuOptionBuilder()
+      .WithLabel("Roll progress")
+      .WithValue($"progress-roll:{score}")
+      .WithEmote(new Emoji("🎲"))
+      ;
   }
   public static ButtonBuilder MarkButton(int addTicks)
   {
     return new ButtonBuilder()
       .WithLabel("Mark progress")
       .WithStyle(ButtonStyle.Primary)
-      .WithEmote(new Emoji(BarEmoji[4]))
+      .WithEmote(Emote.Parse(BarEmoji[Math.Min(4, addTicks)]))
       .WithCustomId($"progress-mark:{addTicks}")
     ;
+  }
+  public static SelectMenuOptionBuilder MarkOption(int addTicks)
+  {
+    return new SelectMenuOptionBuilder()
+      .WithLabel($"Mark {TickString(addTicks)} progress")
+      .WithEmote(Emote.Parse(BarEmoji[Math.Min(4, addTicks)]))
+      .WithValue($"progress-mark:{addTicks}")
+      ;
   }
   public static ButtonBuilder ClearButton(int subtractTicks)
   {
     return new ButtonBuilder()
       .WithLabel("Clear progress")
       .WithStyle(ButtonStyle.Danger)
-      .WithEmote(new Emoji(BarEmoji[0]))
       .WithCustomId($"progress-clear:{subtractTicks}")
+    .WithEmote(Emote.Parse(BarEmoji[0]))
     ;
   }
+
+  public static string TickString(int ticks)
+  {
+    if (ticks >= 3)
+    {
+      int boxes = ticks / 4;
+      int remainder = ticks % 4;
+      string result = boxes.ToString() + " " + (boxes > 1 ? "boxes" : "box");
+      if (remainder > 0)
+      {
+        result += $" and {remainder} ticks";
+      }
+      return result;
+    }
+    return $"{ticks} ticks";
+  }
+  public static SelectMenuOptionBuilder ClearOption(int subtractTicks)
+  {
+    return new SelectMenuOptionBuilder()
+      .WithLabel($"Clear {TickString(subtractTicks)} progress")
+      .WithEmote(Emote.Parse(BarEmoji[0]))
+      .WithValue($"progress-clear:{subtractTicks}")
+      ;
+  }
+
   public static ButtonBuilder RecommitButton(int currentTicks, ChallengeRank currentRank)
   {
     return new ButtonBuilder()
       .WithLabel("Recommit")
       .WithStyle(ButtonStyle.Secondary)
-      .WithEmote(new Emoji("🔄"))
       .WithCustomId($"progress-recommit:{currentTicks},{(int)currentRank}")
+      .WithEmote(new Emoji("🔄"))
     ;
   }
-  public static readonly Rank RankInfo = new();
+  public static readonly Dictionary<ChallengeRank, RankData> RankInfo = new()
+  {
+    {
+      ChallengeRank.None,
+      new RankData(rank: ChallengeRank.None, markTrack: 0, markLegacy: 0, suffer: 0)
+    },
+    {
+      ChallengeRank.Troublesome,
+      new RankData(rank: ChallengeRank.Troublesome, markTrack: 12, markLegacy: 1, suffer: 1)
+    },
+    {
+      ChallengeRank.Dangerous,
+      new RankData(rank: ChallengeRank.Dangerous, markTrack: 8, markLegacy: 2, suffer: 2)
+    },
+    {
+      ChallengeRank.Formidable,
+      new RankData(rank: ChallengeRank.Formidable, markTrack: 4, markLegacy: 4, suffer: 2)
+    },
+    {
+      ChallengeRank.Extreme,
+      new RankData(rank: ChallengeRank.Extreme, markTrack: 2, markLegacy: 8, suffer: 3)
+    },
+    {
+      ChallengeRank.Epic,
+      new RankData(rank: ChallengeRank.Epic, markTrack: 1, markLegacy: 12, suffer: 3)
+    }
+  };
   public static readonly List<string> BarEmoji = new()
   {
     "<:progress0:880599822468534374>",
