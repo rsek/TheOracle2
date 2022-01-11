@@ -15,6 +15,23 @@ public interface IClock
   public bool IsFull => Filled >= Segments;
   public static string AdvanceLabel => "Advance Clock";
   public ComponentBuilder MakeComponents();
+  public static EmbedBuilder ToEmbedStub(string embedCategory, string title, int segments, int filled)
+  {
+    return new EmbedBuilder()
+    .WithAuthor(embedCategory)
+    .WithTitle(title)
+    .WithThumbnailUrl(
+      IClock.Images[segments][filled])
+    .WithColor(
+      IClock.ColorRamp[segments][filled]);
+  }
+  public static Tuple<int, int> Parseclock(Embed embed)
+  {
+    EmbedField clockField = embed.Fields.FirstOrDefault(field => field.Name == "Clock");
+    string[] valueStrings = clockField.Value.Split("/");
+    int[] values = valueStrings.Select(value => int.Parse(value)).ToArray();
+    return new Tuple<int, int>(values[0], values[1]);
+  }
   public static readonly Dictionary<string, Emoji> UxEmoji = new()
   {
     { "reset", new Emoji("↩️") }
@@ -109,6 +126,7 @@ public interface IClock
     {
       "Campaign Clock" => new CampaignClock(embed),
       "Tension Clock" => new TensionClock(embed),
+      "Scene Challenge" => new SceneChallenge(embed),
       _ => throw new ArgumentOutOfRangeException(nameof(embed), "Embed must be a 'Campaign Clock', 'Tension Clock', or 'Scene Challenge'"),
     };
   }

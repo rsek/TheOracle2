@@ -4,19 +4,13 @@ public abstract class Clock : IClock
 {
   protected Clock(Embed embed)
   {
+    var values = IClock.Parseclock(embed);
     Title = embed.Title;
-    string[] clockString = embed.Description.Split("/");
-    Filled = int.Parse(clockString[0]);
-    Segments = int.Parse(clockString[1]);
+    Description = embed.Description;
+    Filled = values.Item1;
+    Segments = values.Item2;
   }
-  protected Clock(EmbedField embedField)
-  {
-    // Title = embedField.Name.Replace(EmbedCategory + ": ", "");
-    string[] clockString = embedField.Value.Split("/");
-    Filled = int.Parse(clockString[0]);
-    Segments = int.Parse(clockString[1]);
-  }
-  protected Clock(ClockSize segments = (ClockSize)6, int filledSegments = 0, string title = "")
+  protected Clock(ClockSize segments = (ClockSize)6, int filledSegments = 0, string title = "", string description = "")
   {
     if (filledSegments < 0 || filledSegments > ((int)segments))
     {
@@ -25,6 +19,7 @@ public abstract class Clock : IClock
     Title = title;
     Segments = (int)segments;
     Filled = filledSegments;
+    Description = description;
   }
   public int Segments { get; }
   public int Filled { get; set; }
@@ -36,24 +31,17 @@ public abstract class Clock : IClock
   {
     return $"{Filled}/{Segments}";
   }
+
   public virtual EmbedBuilder ToEmbed()
   {
-    return new EmbedBuilder()
-      .WithAuthor(EmbedCategory)
-      .WithTitle(Title)
-      .WithDescription(ToString())
-      .WithThumbnailUrl(
-        IClock.Images[Segments][Filled])
-      .WithColor(
-        IClock.ColorRamp[Segments][Filled])
-      ;
+    return IClock.ToEmbedStub(EmbedCategory, Title, Segments, Filled).AddField(ToEmbedField());
   }
   public virtual EmbedFieldBuilder ToEmbedField()
   {
     return new EmbedFieldBuilder()
-    // .WithName($"{EmbedCategory}: {Title}")
     .WithName("Clock")
-    .WithValue(ToString());
+    .WithValue(ToString())
+    .WithIsInline(true);
   }
   public EmbedBuilder AlertEmbed()
   {
@@ -68,24 +56,40 @@ public abstract class Clock : IClock
     }
     return embed;
   }
-  public virtual string FillMessage { get; set; }
-  public ButtonBuilder AdvanceButton(string customId = "clock-advance")
+  public virtual string FillMessage { get; set; } = "";
+  public ButtonBuilder AdvanceButton()
   {
     return new ButtonBuilder()
     .WithLabel(IClock.AdvanceLabel)
     .WithStyle(ButtonStyle.Danger)
+    .WithCustomId("clock-advance")
     .WithDisabled(IsFull)
-    .WithCustomId(customId)
     .WithEmote(new Emoji("🕦"));
   }
-  public ButtonBuilder ResetButton(string customId = "clock-reset")
+  public ButtonBuilder ResetButton()
   {
     return new ButtonBuilder()
     .WithLabel("Reset Clock")
     .WithStyle(ButtonStyle.Secondary)
-    .WithCustomId(customId)
+    .WithCustomId("clock-reset")
     .WithDisabled(Filled == 0)
     .WithEmote(IClock.UxEmoji["reset"]);
+  }
+  public SelectMenuOptionBuilder ResetOption()
+  {
+    return new SelectMenuOptionBuilder()
+    .WithLabel("Reset clock")
+    .WithValue("clock-reset")
+    .WithEmote(IClock.UxEmoji["reset"])
+    .WithDefault(false);
+  }
+  public SelectMenuOptionBuilder AdvanceOption()
+  {
+    return new SelectMenuOptionBuilder()
+    .WithLabel(IClock.AdvanceLabel)
+    .WithValue("clock-advance")
+    .WithEmote(new Emoji("🕦"))
+    .WithDefault(false);
   }
   public virtual ComponentBuilder MakeComponents()
   {

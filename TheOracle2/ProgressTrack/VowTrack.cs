@@ -6,4 +6,5 @@ public class VowTrack : ProgressTrack
   {
 
   }
+  public override string EmbedCategory => "Vow Track";
 }

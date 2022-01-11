@@ -6,4 +6,5 @@ public class ExpeditionTrack : ProgressTrack
   {
 
   }
+  public override string EmbedCategory => "Expedition Track";
 }

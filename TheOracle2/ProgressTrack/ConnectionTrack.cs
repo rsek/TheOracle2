@@ -6,4 +6,5 @@ public class ConnectionTrack : ProgressTrack
   {
 
   }
+  public override string EmbedCategory => "Connection Track";
 }

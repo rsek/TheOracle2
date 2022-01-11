@@ -11,38 +11,54 @@ public interface IProgressTrack
   public ComponentBuilder MakeComponents();
   public ProgressRoll Resolve(Random random);
   public string EmbedCategory { get; }
-  public string ProgressScoreString { get; }
-  public static EmbedBuilder ToEmbed(string embedCategory, ChallengeRank rank, string title, string progressScoreString, int ticks)
+  public EmbedBuilder ToEmbed();
+  public static EmbedBuilder MakeEmbed(string embedCategory, ChallengeRank rank, string title, int ticks, string description = "")
   {
     return new EmbedBuilder()
-    .WithAuthor($"{embedCategory}: {rank}")
+    .WithAuthor(embedCategory)
     .WithTitle(title)
-    .WithFields(ToEmbedField(progressScoreString, ticks));
+    .WithDescription(description)
+    .WithFields(
+      ToRankField(rank),
+      ToProgressBarField(ticks)
+        .WithIsInline(true)
+      );
   }
-  public static EmbedFieldBuilder ToEmbedField(string progressScoreString, int ticks, ChallengeRank challengeRank)
+  public static EmbedFieldBuilder ToRankField(ChallengeRank rank)
   {
     return new EmbedFieldBuilder()
-      .WithName($"*{challengeRank}* Progress Track [{progressScoreString}]")
-      .WithValue(TicksToEmoji(ticks))
-      .WithIsInline(true);
+        .WithName("Rank")
+        .WithValue(rank.ToString())
+        .WithIsInline(true);
   }
-
-  public static IProgressTrack FromField(EmbedField embedField)
+  public static EmbedFieldBuilder ToProgressBarField(int ticks = 0)
   {
-
+    int score = (int)(ticks / 4);
+    return new EmbedFieldBuilder()
+      .WithName($"Track [{score}/10]")
+      .WithValue(TicksToEmoji(ticks));
   }
+  public static ChallengeRank ParseEmbedRank(Embed embed)
+  {
+    EmbedField rankField = embed.Fields.FirstOrDefault(field => field.Name == "Rank");
+    return Enum.Parse<ChallengeRank>(rankField.Value);
+  }
+  public static int ParseEmbedTicks(Embed embed)
+  {
+    EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Track ["));
+    return EmojiToTicks(progressField.Value);
+  }
+
   public static IProgressTrack FromEmbed(Embed embed)
   {
-    EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Progress Track ["));
-    int ticks = EmojiToTicks(progressField.Value);
-    string[] toParse = embed.Author.ToString().Split(": ");
-    var progressType = toParse[0];
-    switch (progressType)
+    switch (embed.Author.ToString())
     {
       // case "Legacy Track":
       //   if (Enum.TryParse<LegacyTrack.LegacyType>(toParse[1], out LegacyTrack.LegacyType legacyType))
       //     return new LegacyTrack(legacyType);
       //   break;
+      case "Progress Track":
+        return new GenericTrack(embed);
       case "Scene Challenge":
         return new SceneChallenge(embed);
       default:
@@ -93,6 +109,21 @@ public interface IProgressTrack
     fill += "\u200C"; //special hidden character for mobile formatting small emojis
     return fill;
   }
+  public static string TickString(int ticks)
+  {
+    if (ticks >= 3)
+    {
+      int boxes = ticks / 4;
+      int remainder = ticks % 4;
+      string result = boxes.ToString() + " " + (boxes > 1 ? "boxes" : "box");
+      if (remainder > 0)
+      {
+        result += $" and {remainder} ticks";
+      }
+      return result;
+    }
+    return $"{ticks} ticks";
+  }
   public static ButtonBuilder ResolveButton(int score)
   {
     return new ButtonBuilder()
@@ -137,22 +168,6 @@ public interface IProgressTrack
     .WithEmote(Emote.Parse(BarEmoji[0]))
     ;
   }
-
-  public static string TickString(int ticks)
-  {
-    if (ticks >= 3)
-    {
-      int boxes = ticks / 4;
-      int remainder = ticks % 4;
-      string result = boxes.ToString() + " " + (boxes > 1 ? "boxes" : "box");
-      if (remainder > 0)
-      {
-        result += $" and {remainder} ticks";
-      }
-      return result;
-    }
-    return $"{ticks} ticks";
-  }
   public static SelectMenuOptionBuilder ClearOption(int subtractTicks)
   {
     return new SelectMenuOptionBuilder()
@@ -161,13 +176,20 @@ public interface IProgressTrack
       .WithValue($"progress-clear:{subtractTicks}")
       ;
   }
-
   public static ButtonBuilder RecommitButton(int currentTicks, ChallengeRank currentRank)
   {
     return new ButtonBuilder()
       .WithLabel("Recommit")
       .WithStyle(ButtonStyle.Secondary)
       .WithCustomId($"progress-recommit:{currentTicks},{(int)currentRank}")
+      .WithEmote(new Emoji("🔄"))
+    ;
+  }
+  public static SelectMenuOptionBuilder RecommitOption(int currentTicks, ChallengeRank currentRank)
+  {
+    return new SelectMenuOptionBuilder()
+      .WithLabel("Recommit")
+      .WithValue($"progress-recommit:{currentTicks},{(int)currentRank}")
       .WithEmote(new Emoji("🔄"))
     ;
   }
@@ -225,9 +247,8 @@ public interface IProgressTrack
     public Random Random { get; }
     public Die ChallengeDie1 { get; }
     public Die ChallengeDie2 { get; }
-
     public int BoxesToClear => Math.Min(ChallengeDie1.Value, ChallengeDie2.Value);
-    public EmbedBuilder ToAlertEmbed(string moveName)
+    public EmbedBuilder ToAlertEmbed(string moveName = "placeholder")
     {
       string rankString = OldTrack.Rank == NewTrack.Rank ? NewTrack.Rank.ToString() : $"~~{OldTrack.Rank}~~ {NewTrack.Rank}";
       return new EmbedBuilder()

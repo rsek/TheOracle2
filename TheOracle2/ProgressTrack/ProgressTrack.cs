@@ -2,47 +2,74 @@ namespace TheOracle2.GameObjects;
 
 public abstract class ProgressTrack : IProgressTrack
 {
-  public ProgressTrack(ChallengeRank rank, int ticks = 0, string title = "", string description = "")
+  protected internal ProgressTrack(Embed embed)
+  {
+    Rank = IProgressTrack.ParseEmbedRank(embed);
+    Ticks = Math.Max(Math.Min(IProgressTrack.ParseEmbedTicks(embed), 40), 0);
+    Title = embed.Title;
+    Description = embed.Description;
+  }
+
+  protected internal ProgressTrack(ChallengeRank rank, int ticks = 0, string title = "", string description = "")
   {
     Rank = rank;
-    Ticks = ticks;
+    Ticks = Math.Max(Math.Min(ticks, 40), 0);
     Title = title;
     Description = description;
   }
   public ChallengeRank Rank { get; set; }
   public int Ticks { get; set; }
-
-  public RankData RankInfo { get => IProgressTrack.RankInfo[Rank]; }
+  public RankData RankData { get => IProgressTrack.RankInfo[Rank]; }
   public string Title { get; set; }
   public string Description { get; set; }
   public int Score => (int)(Ticks / 4);
-  public virtual string EmbedCategory => "Progress Track";
-  public string ProgressScoreString { get => $"{Score}/10"; }
-  public virtual EmbedBuilder ToEmbed()
+  public abstract string EmbedCategory { get; }
+  public ProgressRoll Resolve(Random random)
   {
-    return IProgressTrack.ToEmbed(EmbedCategory, Rank, Title, ProgressScoreString, Ticks);
+    return new ProgressRoll(random, Score, Title);
+  }
+  public EmbedBuilder ToEmbed()
+  {
+    return IProgressTrack.MakeEmbed(EmbedCategory, Rank, Title, Ticks);
   }
   public virtual ButtonBuilder ClearButton()
   {
     return IProgressTrack
-      .ClearButton(RankInfo.MarkTrack)
+      .ClearButton(RankData.MarkTrack)
         .WithDisabled(Ticks == 0);
+  }
+  public virtual SelectMenuOptionBuilder ClearOption()
+  {
+    return IProgressTrack.ClearOption(RankData.MarkTrack);
   }
   public virtual ButtonBuilder MarkButton()
   {
     return IProgressTrack
-      .MarkButton(RankInfo.MarkTrack)
+      .MarkButton(RankData.MarkTrack)
         .WithDisabled(Score >= 10);
+  }
+  public virtual SelectMenuOptionBuilder MarkOption()
+  {
+    return IProgressTrack.MarkOption(RankData.MarkTrack);
   }
   public virtual ButtonBuilder ResolveButton()
   {
     return IProgressTrack
       .ResolveButton(Score);
   }
+  public virtual SelectMenuOptionBuilder ResolveOption()
+  {
+    return IProgressTrack.ResolveOption(Score);
+  }
   public virtual ButtonBuilder RecommitButton()
   {
     return IProgressTrack
       .RecommitButton(Ticks, Rank);
+  }
+
+  public virtual SelectMenuOptionBuilder RecommitOption()
+  {
+    return IProgressTrack.RecommitOption(Ticks, Rank);
   }
   public virtual ComponentBuilder MakeComponents()
   {

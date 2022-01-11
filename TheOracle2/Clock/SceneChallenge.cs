@@ -1,36 +1,41 @@
 namespace TheOracle2.GameObjects;
 public class SceneChallenge : Clock, IProgressTrack
 {
-  public SceneChallenge(Embed embed) : base(embedField: embed.Fields.FirstOrDefault(field => field.Name == "Clock"))
+  public SceneChallenge(Embed embed) : base(embed)
   {
     Title = embed.Title;
-    EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Progress [", StringComparison.InvariantCulture));
-    Ticks = IProgressTrack.EmojiToTicks(progressField.Value);
+    Description = embed.Description;
+    Rank = IProgressTrack.ParseEmbedRank(embed);
+    Ticks = IProgressTrack.ParseEmbedTicks(embed);
   }
-  public SceneChallenge(ClockSize segments = (ClockSize)6, int filledSegments = 0, int ticks = 0, string title = "") : base(segments, filledSegments, title)
+  public SceneChallenge(ClockSize segments = (ClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "") : base(segments, filledSegments, title, description)
   {
     Ticks = ticks;
   }
   public ChallengeRank Rank { get; set; } = ChallengeRank.Formidable;
-
-  public RankData RankInfo { get => IProgressTrack.RankInfo[Rank]; }
-
+  public RankData RankData { get => IProgressTrack.RankInfo[Rank]; }
   public int Ticks { get; set; }
   public int Score => (int)(Ticks / 4);
   public override string EmbedCategory { get; } = "Scene Challenge";
-  public string ProgressScoreString { get => $"{Score}/10"; }
+
+  public override string FillMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
+
+  public ProgressRoll Resolve(Random random)
+  {
+    return new ProgressRoll(random, Score, Title);
+  }
   public override EmbedBuilder ToEmbed()
   {
-    return base.ToEmbed()
-    .AddField(IProgressTrack.ToEmbedField(ProgressScoreString, Ticks))
+    return IClock.ToEmbedStub(EmbedCategory, Title, Segments, Filled)
+    .AddField(IProgressTrack.ToRankField(Rank))
+    .AddField(IProgressTrack.ToProgressBarField(Ticks))
     .AddField(ToEmbedField())
-    .WithDescription("")
     ;
   }
   public virtual ButtonBuilder ClearButton()
   {
     return IProgressTrack
-      .ClearButton(RankInfo.MarkTrack)
+      .ClearButton(RankData.MarkTrack)
         .WithDisabled(Ticks == 0);
   }
   public ButtonBuilder ResolveButton()
@@ -43,26 +48,32 @@ public class SceneChallenge : Clock, IProgressTrack
   public ButtonBuilder MarkButton()
   {
     return IProgressTrack
-      .MarkButton(RankInfo.MarkTrack)
+      .MarkButton(RankData.MarkTrack)
       .WithDisabled(Score >= 10 || IsFull)
     ;
   }
-
+  public SelectMenuBuilder MakeSelectMenu()
+  {
+    SelectMenuBuilder menu = new SelectMenuBuilder()
+    .WithCustomId("scene-challenge-menu")
+    .WithPlaceholder("Manage scene challenge...")
+    .WithMaxValues(1)
+    .WithMinValues(0)
+    ;
+    if (!IsFull)
+    {
+      if (Score < 10) { menu = menu.AddOption(IProgressTrack.MarkOption(RankData.MarkTrack)); }
+      menu = menu.AddOption(AdvanceOption());
+    }
+    menu = menu.AddOption(IProgressTrack.ResolveOption(Score));
+    if (Ticks > 0) { menu = menu.AddOption(IProgressTrack.ClearOption(RankData.MarkTrack)); }
+    if (Filled > 0) { menu = menu.AddOption(ResetOption()); }
+    return menu;
+  }
   public override ComponentBuilder MakeComponents()
   {
-    ComponentBuilder components = new ComponentBuilder()
-      .WithButton(ClearButton())
-      .WithButton(MarkButton())
-      .WithButton(ResolveButton())
+    return new ComponentBuilder()
+      .WithSelectMenu(MakeSelectMenu())
       ;
-    foreach (ActionRowBuilder row in
-        base.MakeComponents().ActionRows)
-    {
-      foreach (ButtonBuilder button in row.Components)
-      {
-        components = components.WithButton(button);
-      }
-    }
-    return components;
   }
 }
