@@ -1,31 +1,76 @@
 namespace TheOracle2.GameObjects;
 public interface IClock
 {
-  public string ToString() { return $"{Filled}/{Segments}"; }
-
-  public EmbedBuilder ToEmbed();
-  public EmbedFieldBuilder ToEmbedField();
-  public EmbedBuilder AlertEmbed();
   public string FillMessage { get; set; }
   public int Segments { get; }
   public int Filled { get; set; }
+  public bool IsFull { get; }
   public string Title { get; set; }
   public string Description { get; set; }
   public string EmbedCategory { get; }
-  public bool IsFull => Filled >= Segments;
-  public static string AdvanceLabel => "Advance Clock";
+  public EmbedBuilder ToEmbed();
+  public EmbedBuilder AlertEmbed();
   public ComponentBuilder MakeComponents();
-  public static EmbedBuilder ToEmbedStub(string embedCategory, string title, int segments, int filled)
+  public static EmbedBuilder AlertEmbedTemplate(int segments, int filled, string fillMessage)
   {
-    return new EmbedBuilder()
-    .WithAuthor(embedCategory)
-    .WithTitle(title)
+    var title = filled == segments ? "The clock fills!" : $"The clock advances to {filled}/{segments}";
+    EmbedBuilder embed = new EmbedBuilder()
+      .WithTitle(title);
+    if (filled == segments)
+    {
+      embed = embed.WithDescription(fillMessage);
+    }
+    return AddClockTemplate(embed, segments, filled);
+  }
+  public static SelectMenuOptionBuilder ResetOption()
+  {
+    return new SelectMenuOptionBuilder()
+    .WithLabel("Reset clock")
+    .WithValue("clock-reset")
+    .WithEmote(IClock.UxEmoji["reset"])
+    .WithDefault(false);
+  }
+  public static ButtonBuilder ResetButton()
+  {
+    return new ButtonBuilder()
+    .WithLabel("Reset Clock")
+    .WithStyle(ButtonStyle.Secondary)
+    .WithCustomId("clock-reset")
+    .WithEmote(IClock.UxEmoji["reset"]);
+  }
+  public static SelectMenuOptionBuilder AdvanceOption()
+  {
+    return new SelectMenuOptionBuilder()
+    .WithLabel(IClock.AdvanceLabel)
+    .WithValue("clock-advance")
+    .WithEmote(new Emoji("🕦"))
+    .WithDefault(false);
+  }
+  public static ButtonBuilder AdvanceButton()
+  {
+    return new ButtonBuilder()
+      .WithLabel(IClock.AdvanceLabel)
+      .WithStyle(ButtonStyle.Danger)
+      .WithCustomId("clock-advance")
+      .WithEmote(new Emoji("🕦"));
+  }
+  public static string AdvanceLabel => "Advance Clock";
+  public static EmbedFieldBuilder ClockField(int segments, int filled)
+  {
+    return new EmbedFieldBuilder().WithName("Clock").WithValue($"{filled}/{segments}").WithIsInline(true);
+  }
+  public static EmbedBuilder AddClockTemplate(EmbedBuilder embed, int segments, int filled)
+  {
+    return embed
     .WithThumbnailUrl(
       IClock.Images[segments][filled])
     .WithColor(
-      IClock.ColorRamp[segments][filled]);
+      IClock.ColorRamp[segments][filled])
+    .AddField(
+      ClockField(segments, filled)
+      );
   }
-  public static Tuple<int, int> Parseclock(Embed embed)
+  public static Tuple<int, int> ParseClock(Embed embed)
   {
     EmbedField clockField = embed.Fields.FirstOrDefault(field => field.Name == "Clock");
     string[] valueStrings = clockField.Value.Split("/");
@@ -45,7 +90,6 @@ public interface IClock
     { 90, new Emoji("🕚") },
     { 100, new Emoji("🕛") }
   };
-
   public static readonly Dictionary<int, Color[]> ColorRamp = new()
   {
     {
@@ -80,44 +124,44 @@ public interface IClock
     {
       6,
       new string[]{
-      "https://i.imgur.com/rvDLRZO.png",
-      "https://i.imgur.com/EZbNNRC.png",
-      "https://i.imgur.com/RlaRzgz.png",
-      "https://i.imgur.com/OJ2WVSR.png",
-      "https://i.imgur.com/YgLlojT.png",
-      "https://i.imgur.com/ZpyIpTC.png",
-      "https://i.imgur.com/KjYg7aC.png"
+        "https://i.imgur.com/rvDLRZO.png",
+        "https://i.imgur.com/EZbNNRC.png",
+        "https://i.imgur.com/RlaRzgz.png",
+        "https://i.imgur.com/OJ2WVSR.png",
+        "https://i.imgur.com/YgLlojT.png",
+        "https://i.imgur.com/ZpyIpTC.png",
+        "https://i.imgur.com/KjYg7aC.png"
       }
     },
     {
       8,
       new string[]{
-      "https://i.imgur.com/Qi0pkYD.png",
-      "https://i.imgur.com/9wwW3Sh.png",
-      "https://i.imgur.com/sM27Mbf.png",
-      "https://i.imgur.com/GsKElZv.png",
-      "https://i.imgur.com/QvYHujk.png",
-      "https://i.imgur.com/nNEFyRr.png",
-      "https://i.imgur.com/a9Qvkin.png",
-      "https://i.imgur.com/0dclJ9Q.png",
-      "https://i.imgur.com/5Z0bQ9K.png",
-    }
+        "https://i.imgur.com/Qi0pkYD.png",
+        "https://i.imgur.com/9wwW3Sh.png",
+        "https://i.imgur.com/sM27Mbf.png",
+        "https://i.imgur.com/GsKElZv.png",
+        "https://i.imgur.com/QvYHujk.png",
+        "https://i.imgur.com/nNEFyRr.png",
+        "https://i.imgur.com/a9Qvkin.png",
+        "https://i.imgur.com/0dclJ9Q.png",
+        "https://i.imgur.com/5Z0bQ9K.png",
+      }
     },
     {
       10,
       new string[]{
-      "https://i.imgur.com/u9erdAx.png",
-      "https://i.imgur.com/0zfi1PJ.png",
-      "https://i.imgur.com/ayanbMK.png",
-      "https://i.imgur.com/OtfwmEf.png",
-      "https://i.imgur.com/uUWoyZV.png",
-      "https://i.imgur.com/eKhfGoj.png",
-      "https://i.imgur.com/cwzEkCD.png",
-      "https://i.imgur.com/GNJPzru.png",
-      "https://i.imgur.com/cMQNAZV.png",
-      "https://i.imgur.com/EaOxmdt.png",
-      "https://i.imgur.com/NRhTaBR.png",
-    }
+        "https://i.imgur.com/u9erdAx.png",
+        "https://i.imgur.com/0zfi1PJ.png",
+        "https://i.imgur.com/ayanbMK.png",
+        "https://i.imgur.com/OtfwmEf.png",
+        "https://i.imgur.com/uUWoyZV.png",
+        "https://i.imgur.com/eKhfGoj.png",
+        "https://i.imgur.com/cwzEkCD.png",
+        "https://i.imgur.com/GNJPzru.png",
+        "https://i.imgur.com/cMQNAZV.png",
+        "https://i.imgur.com/EaOxmdt.png",
+        "https://i.imgur.com/NRhTaBR.png",
+      }
     }
   };
   public static IClock FromEmbed(Embed embed)

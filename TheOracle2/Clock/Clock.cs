@@ -4,7 +4,7 @@ public abstract class Clock : IClock
 {
   protected Clock(Embed embed)
   {
-    var values = IClock.Parseclock(embed);
+    var values = IClock.ParseClock(embed);
     Title = embed.Title;
     Description = embed.Description;
     Filled = values.Item1;
@@ -27,74 +27,25 @@ public abstract class Clock : IClock
   public string Description { get; set; }
   public abstract string EmbedCategory { get; }
   public bool IsFull => Filled >= Segments;
-  public override string ToString()
-  {
-    return $"{Filled}/{Segments}";
-  }
 
   public virtual EmbedBuilder ToEmbed()
   {
-    return IClock.ToEmbedStub(EmbedCategory, Title, Segments, Filled).AddField(ToEmbedField());
-  }
-  public virtual EmbedFieldBuilder ToEmbedField()
-  {
-    return new EmbedFieldBuilder()
-    .WithName("Clock")
-    .WithValue(ToString())
-    .WithIsInline(true);
+    var embed = new EmbedBuilder()
+      .WithAuthor(EmbedCategory)
+      .WithTitle(Title)
+      .WithDescription(Description)
+    ;
+    return IClock.AddClockTemplate(embed, Segments, Filled);
   }
   public EmbedBuilder AlertEmbed()
   {
-    EmbedBuilder embed = new EmbedBuilder().WithThumbnailUrl(
-      IClock.Images[Segments][Filled])
-    .WithColor(IClock.ColorRamp[Segments][Filled])
-    .WithAuthor($"{EmbedCategory}: {Title}")
-    .WithTitle(IsFull ? "The clock fills!" : $"The clock advances to {ToString()}");
-    if (IsFull)
-    {
-      embed = embed.WithDescription(FillMessage);
-    }
-    return embed;
+    return IClock.AlertEmbedTemplate(Segments, Filled, FillMessage);
   }
   public virtual string FillMessage { get; set; } = "";
-  public ButtonBuilder AdvanceButton()
-  {
-    return new ButtonBuilder()
-    .WithLabel(IClock.AdvanceLabel)
-    .WithStyle(ButtonStyle.Danger)
-    .WithCustomId("clock-advance")
-    .WithDisabled(IsFull)
-    .WithEmote(new Emoji("🕦"));
-  }
-  public ButtonBuilder ResetButton()
-  {
-    return new ButtonBuilder()
-    .WithLabel("Reset Clock")
-    .WithStyle(ButtonStyle.Secondary)
-    .WithCustomId("clock-reset")
-    .WithDisabled(Filled == 0)
-    .WithEmote(IClock.UxEmoji["reset"]);
-  }
-  public SelectMenuOptionBuilder ResetOption()
-  {
-    return new SelectMenuOptionBuilder()
-    .WithLabel("Reset clock")
-    .WithValue("clock-reset")
-    .WithEmote(IClock.UxEmoji["reset"])
-    .WithDefault(false);
-  }
-  public SelectMenuOptionBuilder AdvanceOption()
-  {
-    return new SelectMenuOptionBuilder()
-    .WithLabel(IClock.AdvanceLabel)
-    .WithValue("clock-advance")
-    .WithEmote(new Emoji("🕦"))
-    .WithDefault(false);
-  }
   public virtual ComponentBuilder MakeComponents()
   {
     return new ComponentBuilder()
-    .WithButton(AdvanceButton())
-    .WithButton(ResetButton());
+    .WithButton(IClock.AdvanceButton().WithDisabled(IsFull))
+    .WithButton(IClock.ResetButton().WithDisabled(Filled == 0));
   }
 }

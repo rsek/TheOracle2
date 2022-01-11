@@ -1,54 +1,43 @@
 namespace TheOracle2.GameObjects;
-public class SceneChallenge : Clock, IProgressTrack
+public class SceneChallenge : ProgressTrack, IClock
 {
   public SceneChallenge(Embed embed) : base(embed)
   {
-    Title = embed.Title;
-    Description = embed.Description;
-    Rank = IProgressTrack.ParseEmbedRank(embed);
-    Ticks = IProgressTrack.ParseEmbedTicks(embed);
+    Tuple<int, int> clockData = IClock.ParseClock(embed);
+    Filled = clockData.Item1;
+    Segments = clockData.Item2;
   }
-  public SceneChallenge(ClockSize segments = (ClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "") : base(segments, filledSegments, title, description)
+  public SceneChallenge(ClockSize segments = (ClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(rank, ticks, title, description)
   {
-    Ticks = ticks;
+    Filled = filledSegments;
+    Segments = (int)segments;
   }
-  public ChallengeRank Rank { get; set; } = ChallengeRank.Formidable;
-  public RankData RankData { get => IProgressTrack.RankInfo[Rank]; }
-  public int Ticks { get; set; }
-  public int Score => (int)(Ticks / 4);
   public override string EmbedCategory { get; } = "Scene Challenge";
-
-  public override string FillMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
-
-  public ProgressRoll Resolve(Random random)
-  {
-    return new ProgressRoll(random, Score, Title);
-  }
+  public string FillMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
+  public int Segments { get; }
+  public int Filled { get; set; }
+  public bool IsFull => Filled >= Segments;
   public override EmbedBuilder ToEmbed()
   {
-    return IClock.ToEmbedStub(EmbedCategory, Title, Segments, Filled)
-    .AddField(IProgressTrack.ToRankField(Rank))
-    .AddField(IProgressTrack.ToProgressBarField(Ticks))
-    .AddField(ToEmbedField())
+    return IClock.AddClockTemplate(base.ToEmbed(), Segments, Filled);
     ;
   }
-  public virtual ButtonBuilder ClearButton()
+  public EmbedBuilder AlertEmbed()
   {
-    return IProgressTrack
-      .ClearButton(RankData.MarkTrack)
-        .WithDisabled(Ticks == 0);
+    return IClock.AlertEmbedTemplate(Segments, Filled, FillMessage)
+    .WithAuthor($"{EmbedCategory}: {Title}");
   }
-  public ButtonBuilder ResolveButton()
+  public override ButtonBuilder ResolveButton()
   {
-    return IProgressTrack
-      .ResolveButton(Score)
+    return base
+      .ResolveButton()
       .WithLabel("Resolve challenge")
     ;
   }
-  public ButtonBuilder MarkButton()
+  public override ButtonBuilder MarkButton()
   {
-    return IProgressTrack
-      .MarkButton(RankData.MarkTrack)
+    return base
+      .MarkButton()
       .WithDisabled(Score >= 10 || IsFull)
     ;
   }
@@ -63,11 +52,11 @@ public class SceneChallenge : Clock, IProgressTrack
     if (!IsFull)
     {
       if (Score < 10) { menu = menu.AddOption(IProgressTrack.MarkOption(RankData.MarkTrack)); }
-      menu = menu.AddOption(AdvanceOption());
+      menu = menu.AddOption(IClock.AdvanceOption());
     }
     menu = menu.AddOption(IProgressTrack.ResolveOption(Score));
     if (Ticks > 0) { menu = menu.AddOption(IProgressTrack.ClearOption(RankData.MarkTrack)); }
-    if (Filled > 0) { menu = menu.AddOption(ResetOption()); }
+    if (Filled > 0) { menu = menu.AddOption(IClock.ResetOption()); }
     return menu;
   }
   public override ComponentBuilder MakeComponents()

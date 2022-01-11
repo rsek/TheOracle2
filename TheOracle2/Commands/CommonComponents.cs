@@ -47,7 +47,7 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
   {
     var interaction = Context.Interaction as SocketMessageComponent;
     var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
-    await interaction.RespondAsync(embed: progressTrack.Resolve(Random).ToEmbed().Build());
+    await interaction.RespondAsync(embed: progressTrack.Roll(Random).ToEmbed().Build());
   }
   [ComponentInteraction("progress-menu")]
   public async Task ProgressMenu(string[] values)
