@@ -39,7 +39,7 @@ public interface IProgressTrack : ITrack
   public static int ParseEmbedTicks(Embed embed)
   {
     EmbedField progressField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith("Track ["));
-    return EmojiToTicks(progressField.Value);
+    return EmojiStringToTicks(progressField.Value);
   }
 
   public static IProgressTrack FromEmbed(Embed embed)
@@ -88,7 +88,7 @@ public interface IProgressTrack : ITrack
     return new ButtonBuilder()
       .WithLabel("Mark progress")
       .WithStyle(ButtonStyle.Primary)
-      .WithEmote(Emote.Parse(BarEmoji[Math.Min(4, addTicks)]))
+      .WithEmote(BarEmoji[Math.Min(BoxSize, addTicks)])
       .WithCustomId($"progress-mark:{addTicks}")
     ;
   }
@@ -96,7 +96,7 @@ public interface IProgressTrack : ITrack
   {
     return new SelectMenuOptionBuilder()
       .WithLabel($"Mark {TickString(addTicks)} progress")
-      .WithEmote(Emote.Parse(BarEmoji[Math.Min(4, addTicks)]))
+      .WithEmote(BarEmoji[Math.Min(BoxSize, addTicks)])
       .WithValue($"progress-mark:{addTicks}")
       ;
   }
@@ -106,14 +106,14 @@ public interface IProgressTrack : ITrack
       .WithLabel("Clear progress")
       .WithStyle(ButtonStyle.Danger)
       .WithCustomId($"progress-clear:{subtractTicks}")
-    .WithEmote(Emote.Parse(BarEmoji[0]))
+    .WithEmote(BarEmoji[0])
     ;
   }
   public static SelectMenuOptionBuilder ClearOption(int subtractTicks)
   {
     return new SelectMenuOptionBuilder()
       .WithLabel($"Clear {TickString(subtractTicks)} progress")
-      .WithEmote(Emote.Parse(BarEmoji[0]))
+      .WithEmote(BarEmoji[0])
       .WithValue($"progress-clear:{subtractTicks}")
       ;
   }
@@ -138,23 +138,23 @@ public interface IProgressTrack : ITrack
   {
     {
       ChallengeRank.Troublesome,
-      new RankData(rank: ChallengeRank.Troublesome, markTrack: 12, markLegacy: 1, suffer: 1)
+      new RankData(rank: ChallengeRank.Troublesome, markTrack: BoxSize * 3, markLegacy: 1, suffer: 1)
     },
     {
       ChallengeRank.Dangerous,
-      new RankData(rank: ChallengeRank.Dangerous, markTrack: 8, markLegacy: 2, suffer: 2)
+      new RankData(rank: ChallengeRank.Dangerous, markTrack: BoxSize * 2, markLegacy: 2, suffer: 2)
     },
     {
       ChallengeRank.Formidable,
-      new RankData(rank: ChallengeRank.Formidable, markTrack: 4, markLegacy: 4, suffer: 2)
+      new RankData(rank: ChallengeRank.Formidable, markTrack: BoxSize, markLegacy: BoxSize, suffer: 2)
     },
     {
       ChallengeRank.Extreme,
-      new RankData(rank: ChallengeRank.Extreme, markTrack: 2, markLegacy: 8, suffer: 3)
+      new RankData(rank: ChallengeRank.Extreme, markTrack: 2, markLegacy: BoxSize * 2, suffer: 3)
     },
     {
       ChallengeRank.Epic,
-      new RankData(rank: ChallengeRank.Epic, markTrack: 1, markLegacy: 12, suffer: 3)
+      new RankData(rank: ChallengeRank.Epic, markTrack: 1, markLegacy: BoxSize * 3, suffer: 3)
     }
   };
   public class Recommit
@@ -166,7 +166,7 @@ public interface IProgressTrack : ITrack
       Random = random;
       ChallengeDie1 = new Die(Random, 10);
       ChallengeDie2 = new Die(Random, 10);
-      int ticksToClear = BoxesToClear * 4;
+      int ticksToClear = BoxesToClear * BoxSize;
       NewTrack.Ticks = Math.Min(0, NewTrack.Ticks - ticksToClear);
       NewTrack.Rank = (ChallengeRank)Math.Min(
         ((int)OldTrack.Rank) + 1, 5);
@@ -186,7 +186,7 @@ public interface IProgressTrack : ITrack
         .WithDescription($"You recommit to *{OldTrack.Title}*.")
         .AddField("Challenge Dice", $"{ChallengeDie1.Value}, {ChallengeDie2.Value}", true)
         .AddField("Progress Boxes Cleared", $"{BoxesToClear}", true)
-        .AddField($"Track ~~[{OldTrack.Score}/10]~~ {NewTrack.Score}/10]", TicksToEmoji(NewTrack.Ticks))
+        .AddField($"Track ~~[{OldTrack.Score}/{TrackSize}]~~ {NewTrack.Score}/{TrackSize}]", TicksToEmojiBar(NewTrack.Ticks))
         .AddField("Rank", rankString, true)
         ;
     }

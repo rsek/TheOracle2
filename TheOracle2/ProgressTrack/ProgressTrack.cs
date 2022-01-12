@@ -18,7 +18,7 @@ public abstract class ProgressTrack : IProgressTrack
   }
   public ChallengeRank Rank { get; set; }
   private int _ticks;
-  public int Ticks { get => _ticks; set => _ticks = Math.Max(0, Math.Min(value, 40)); }
+  public int Ticks { get => _ticks; set => _ticks = Math.Max(0, Math.Min(value, ITrack.MaxTicks)); }
   public RankData RankData => IProgressTrack.RankInfo[Rank];
   public int Score => ITrack.GetScore(Ticks);
   public abstract string EmbedCategory { get; }
@@ -46,7 +46,7 @@ public abstract class ProgressTrack : IProgressTrack
   {
     return IProgressTrack
       .MarkButton(RankData.MarkTrack)
-        .WithDisabled(Score >= 10);
+        .WithDisabled(Score >= ITrack.TrackSize);
   }
   public virtual SelectMenuOptionBuilder MarkOption()
   {

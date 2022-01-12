@@ -19,8 +19,7 @@ public class CampaignClock : Clock
   }
   public SelectMenuBuilder AdvanceSelectMenu()
   {
-    SelectMenuBuilder selectMenu = new SelectMenuBuilder()
-    ;
+    SelectMenuBuilder selectMenu = new();
     if (!IsFull)
     {
       selectMenu = selectMenu.AddOption(AdvanceAskOption(100, IClock.AdvanceLabel, IClock.OddsEmoji[100]));
@@ -31,7 +30,7 @@ public class CampaignClock : Clock
         selectMenu = selectMenu.AddOption(menuOption);
       }
     }
-    return selectMenu.AddOption(AdvanceOption())
+    return selectMenu.AddOption(IClock.AdvanceOption())
     .WithPlaceholder("Advance clock...")
     .WithCustomId("clock-menu")
     .WithMinValues(0)

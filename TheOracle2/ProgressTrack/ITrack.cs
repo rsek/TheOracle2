@@ -4,72 +4,85 @@ namespace TheOracle2.GameObjects;
 /// <summary>
 /// Interface inherited by all ranked and unranked tracks.
 /// </summary>
-
 public interface ITrack
 {
+  public const int BoxSize = 4;
+  public const int TrackSize = 10;
+  public const int MaxTicks = BoxSize * TrackSize;
   public int Ticks { get; set; }
   public int Score { get; }
   public ProgressRoll Roll(Random random);
   protected static int GetScore(int ticks)
   {
-    int rawScore = (int)(ticks / 4);
-    return Math.Max(0, Math.Min(rawScore, 10));
+    int rawScore = ticks / BoxSize;
+    return Math.Max(0, Math.Min(rawScore, TrackSize));
   }
-  protected static int EmojiToTicks(string emojiBar)
+  public static string TickString(int ticks)
   {
-    emojiBar = emojiBar.Replace("\u200C", "");
-    int index = 0;
-    foreach (string emoji in BarEmoji)
-    {
-      emojiBar = emojiBar.Replace(emoji, index.ToString());
-      index++;
-    }
-    IEnumerable<int> values = emojiBar.Split(" ").Select(item => int.Parse(item));
-    return values.Sum();
-  }
-  protected static string TickString(int ticks)
-  {
+
+    string tickAutoPlural = "tick";
     if (ticks >= 3)
     {
-      int boxes = ticks / 4;
-      int remainder = ticks % 4;
+      int boxes = ticks / BoxSize;
+      int remainder = ticks % BoxSize;
       string result = boxes.ToString() + " " + (boxes > 1 ? "boxes" : "box");
       if (remainder > 0)
       {
-        result += $" and {remainder} ticks";
+        if (remainder > 1) { tickAutoPlural += "s"; }
+        result += $" and {remainder} {tickAutoPlural}";
       }
       return result;
     }
-    return $"{ticks} ticks";
+    if (ticks > 1) { tickAutoPlural += "s"; }
+    return $"{ticks} {tickAutoPlural}";
   }
-  protected static string TicksToEmoji(int ticks)
+  protected static int EmojiStringToTicks(string emojiString)
   {
-    int score = ticks / 4;
-    int remainder = ticks % 4;
-    string fill = new('4', score);
-    string finalTickMark = (remainder == 0) ? string.Empty : remainder.ToString();
-    fill = (fill + finalTickMark).PadRight(10, '0');
-    var boxValues = fill.ToCharArray().Select(item => item.ToString());
-    var emojiStrings = boxValues.Select(box => BarEmoji[int.Parse(box)]);
-    fill = String.Join(" ", emojiStrings);
-    fill += "\u200C"; //special hidden character for mobile formatting small emojis
-    return fill;
+    emojiString = emojiString.Replace("\u200C", "");
+    IEnumerable<int> integers = emojiString.Split(" ").Select(item => BarEmoji
+      .IndexOf(
+        Emote.Parse(item)
+      ));
+    return integers.Sum();
+  }
+  public static List<Emote> TicksToEmoji(int ticks)
+  {
+    List<Emote> emojis = new();
+    var counter = ticks;
+    while (counter > 0)
+    {
+      int increment = Math.Min(BoxSize, counter);
+      emojis.Add(BarEmoji[increment]);
+      counter -= increment;
+    }
+    return emojis;
+  }
+  public static string TicksToEmojiBar(int ticks)
+  {
+    List<Emote> emoji = TicksToEmoji(ticks);
+    while (emoji.Count < TrackSize)
+    {
+      emoji.Add(BarEmoji[0]);
+    }
+    string result = string.Join(" ", emoji);
+    result += "\u200C"; //special hidden character for mobile formatting small emojis
+    return result;
   }
 
-  protected static readonly List<string> BarEmoji = new()
+  protected static readonly List<Emote> BarEmoji = new()
   {
-    "<:progress0:880599822468534374>",
-    "<:progress1:880599822736965702>",
-    "<:progress2:880599822724390922>",
-    "<:progress3:880599822736957470>",
-    "<:progress4:880599822820864060>"
+    Emote.Parse("<:progress0:880599822468534374>"),
+    Emote.Parse("<:progress1:880599822736965702>"),
+    Emote.Parse("<:progress2:880599822724390922>"),
+    Emote.Parse("<:progress3:880599822736957470>"),
+    Emote.Parse("<:progress4:880599822820864060>")
   };
 
   protected static EmbedFieldBuilder ToProgressBarField(int ticks = 0, string name = "Track")
   {
-    int score = (int)(ticks / 4);
+    int score = ticks / BoxSize;
     return new EmbedFieldBuilder()
-      .WithName($"{name} [{score}/10]")
-      .WithValue(TicksToEmoji(ticks));
+      .WithName($"{name} [{score}/{TrackSize}]")
+      .WithValue(TicksToEmojiBar(ticks));
   }
 }

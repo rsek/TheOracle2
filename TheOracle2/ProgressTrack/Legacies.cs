@@ -1,34 +1,60 @@
 namespace TheOracle2.GameObjects;
 
-public class Legacies
+public class Legacies : List<LegacyTrack>
 {
-  public Legacies(int questTicks = 0, int bondTicks = 0, int discoveryTicks = 0)
+  public Legacies(Embed embed)
   {
-    Quests = new LegacyTrack(Legacy.Quests, questTicks);
-    Bonds = new LegacyTrack(Legacy.Bonds, bondTicks);
-    Discoveries = new LegacyTrack(Legacy.Discoveries, discoveryTicks);
+    foreach (Legacy legacy in Enum.GetValues(typeof(Legacy)))
+    {
+      var embedField = embed.Fields.FirstOrDefault(field => field.Name.StartsWith(legacy.ToString()));
+      Add(new LegacyTrack(embedField));
+    }
   }
-  public LegacyTrack Quests { get; set; }
-  public LegacyTrack Bonds { get; set; }
-  public LegacyTrack Discoveries { get; set; }
-  public int Xp => Quests.Xp + Bonds.Xp + Discoveries.Xp;
+  public Legacies(params int[] legacyTicks)
+  {
+    int index = 0;
+    foreach (Legacy legacy in Enum.GetValues(typeof(Legacy)))
+    {
+      Add(new LegacyTrack(legacy, legacyTicks[index]));
+      index++;
+    }
+  }
+  public int Xp => this.Select(item => item.Xp).Sum();
   public EmbedBuilder ToEmbed()
   {
-    return new EmbedBuilder()
+    EmbedBuilder embed = new EmbedBuilder()
       .WithTitle("Legacies")
       .AddField("XP Earned", Xp.ToString(), true)
-      .AddField(Quests.ToEmbedField())
-      .AddField(Bonds.ToEmbedField())
-      .AddField(Discoveries.ToEmbedField())
-    ;
+      .AddField("XP Spent", "0", true);
+    foreach (LegacyTrack legacy in this)
+    {
+      embed.AddField(legacy.ToEmbedField());
+    }
+    return embed;
   }
   public ComponentBuilder MakeComponents()
   {
-    ComponentBuilder components = new ComponentBuilder().WithSelectMenu(new SelectMenuBuilder()
-      .AddOption(Quests.MarkRewardOption())
-      .AddOption(Bonds.MarkRewardOption())
-      .AddOption(Discoveries.MarkRewardOption())
-    );
-    return components;
+    SelectMenuBuilder selectMenu = new SelectMenuBuilder()
+      .WithPlaceholder("Mark Legacy...")
+      .WithCustomId("legacies-menu")
+      .WithMinValues(0)
+      .WithMaxValues(1);
+    foreach (LegacyTrack legacy in this)
+    {
+      foreach (ChallengeRank rank in Enum.GetValues<ChallengeRank>())
+        selectMenu.AddOption(legacy.MarkRewardOption(rank));
+    }
+    foreach (LegacyTrack legacy in this)
+    {
+      selectMenu.AddOption(legacy.ClearOption(1));
+      selectMenu.AddOption(legacy.ClearOption(ITrack.BoxSize));
+    }
+
+    return new ComponentBuilder().WithSelectMenu(selectMenu);
+  }
+  public void Mark(Legacy legacy, int ticks)
+  {
+    var targetLegacy = this.FirstOrDefault(item => item.Legacy == legacy);
+    targetLegacy.MarkReward(ticks);
   }
 }
