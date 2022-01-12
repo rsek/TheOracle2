@@ -38,7 +38,7 @@ public class SceneChallenge : ProgressTrack, IClock
   {
     return base
       .MarkButton()
-      .WithDisabled(Score >= 10 || IsFull)
+      .WithDisabled(Score >= ITrack.TrackSize || IsFull)
     ;
   }
   public SelectMenuBuilder MakeSelectMenu()
@@ -51,7 +51,7 @@ public class SceneChallenge : ProgressTrack, IClock
     ;
     if (!IsFull)
     {
-      if (Score < 10) { menu = menu.AddOption(IProgressTrack.MarkOption(RankData.MarkTrack)); }
+      if (Score < ITrack.TrackSize) { menu = menu.AddOption(IProgressTrack.MarkOption(RankData.MarkTrack)); }
       menu = menu.AddOption(IClock.AdvanceOption());
     }
     menu = menu.AddOption(IProgressTrack.ResolveOption(Score));
