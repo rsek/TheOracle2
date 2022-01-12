@@ -7,6 +7,12 @@ public class SceneChallenge : ProgressTrack, IClock
     Filled = clockData.Item1;
     Segments = clockData.Item2;
   }
+  public SceneChallenge(Embed embed, int ticks) : base(embed, ticks)
+  {
+    Tuple<int, int> clockData = IClock.ParseClock(embed);
+    Filled = clockData.Item1;
+    Segments = clockData.Item2;
+  }
   public SceneChallenge(SceneChallengeClockSize segments = (SceneChallengeClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(rank, ticks, title, description)
   {
     Filled = filledSegments;
@@ -27,20 +33,20 @@ public class SceneChallenge : ProgressTrack, IClock
     return IClock.AlertEmbedTemplate(Segments, Filled, FillMessage)
     .WithAuthor($"{EmbedCategory}: {Title}");
   }
-  public override ButtonBuilder ResolveButton()
-  {
-    return base
-      .ResolveButton()
-      .WithLabel("Resolve challenge")
-    ;
-  }
-  public override ButtonBuilder MarkButton()
-  {
-    return base
-      .MarkButton()
-      .WithDisabled(Score >= ITrack.TrackSize || IsFull)
-    ;
-  }
+  // public override ButtonBuilder ResolveButton()
+  // {
+  //   return base
+  //     .ResolveButton()
+  //     .WithLabel("Resolve challenge")
+  //   ;
+  // }
+  // public override ButtonBuilder MarkButton()
+  // {
+  //   return base
+  //     .MarkButton()
+  //     .WithDisabled(Score >= ITrack.TrackSize || IsFull)
+  //   ;
+  // }
   public SelectMenuBuilder MakeSelectMenu()
   {
     SelectMenuBuilder menu = new SelectMenuBuilder()

@@ -65,12 +65,28 @@ public interface IProgressTrack : ITrack
   }
 
 
-  public static ButtonBuilder ResolveButton(int score)
+  /// <summary>
+  /// Builds embed without parsing the progress bar string. Might be faster than an embed alone if you can put the ticks in a customid or something.
+  /// </summary>
+  public static IProgressTrack FromEmbed(Embed embed, int ticks)
+  {
+    switch (embed.Author.ToString())
+    {
+      case "Progress Track":
+        return new GenericTrack(embed, ticks);
+      case "Scene Challenge":
+        return new SceneChallenge(embed, ticks);
+      default:
+        break;
+    }
+    throw new Exception("Unable to parse embed into progress track.");
+  }
+  public static ButtonBuilder ResolveButton(int ticks)
   {
     return new ButtonBuilder()
       .WithLabel("Roll progress")
       .WithStyle(ButtonStyle.Success)
-      .WithCustomId($"progress-roll:{score}")
+      .WithCustomId($"progress-roll:{ticks}")
       .WithEmote(new Emoji("🎲"))
     ;
   }
@@ -79,17 +95,17 @@ public interface IProgressTrack : ITrack
   {
     return new SelectMenuOptionBuilder()
       .WithLabel("Roll progress")
-      .WithValue($"progress-roll:{score}")
+      .WithValue($"progress-roll")
       .WithEmote(new Emoji("🎲"))
       ;
   }
-  public static ButtonBuilder MarkButton(int addTicks)
+  public static ButtonBuilder MarkButton(int addTicks, int currentTicks)
   {
     return new ButtonBuilder()
       .WithLabel("Mark progress")
       .WithStyle(ButtonStyle.Primary)
       .WithEmote(BarEmoji[Math.Min(BoxSize, addTicks)])
-      .WithCustomId($"progress-mark:{addTicks}")
+      .WithCustomId($"progress-mark:{addTicks},{currentTicks}")
     ;
   }
   public static SelectMenuOptionBuilder MarkOption(int addTicks)
@@ -100,12 +116,12 @@ public interface IProgressTrack : ITrack
       .WithValue($"progress-mark:{addTicks}")
       ;
   }
-  public static ButtonBuilder ClearButton(int subtractTicks)
+  public static ButtonBuilder ClearButton(int subtractTicks, int currentTicks)
   {
     return new ButtonBuilder()
       .WithLabel("Clear progress")
       .WithStyle(ButtonStyle.Danger)
-      .WithCustomId($"progress-clear:{subtractTicks}")
+      .WithCustomId($"progress-clear:{subtractTicks},{currentTicks}")
     .WithEmote(BarEmoji[0])
     ;
   }
@@ -130,7 +146,7 @@ public interface IProgressTrack : ITrack
   {
     return new SelectMenuOptionBuilder()
       .WithLabel("Recommit")
-      .WithValue($"progress-recommit:{currentTicks},{currentRank}")
+      .WithValue($"progress-recommit")
       .WithEmote(new Emoji("🔄"))
     ;
   }

@@ -12,7 +12,7 @@ public interface ITrack
   public int Ticks { get; set; }
   public int Score { get; }
   public ProgressRoll Roll(Random random);
-  protected static int GetScore(int ticks)
+  public static int GetScore(int ticks)
   {
     int rawScore = ticks / BoxSize;
     return Math.Max(0, Math.Min(rawScore, TrackSize));

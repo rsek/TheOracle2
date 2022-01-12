@@ -27,8 +27,7 @@ public interface IClock
     return new SelectMenuOptionBuilder()
     .WithLabel("Reset clock")
     .WithValue("clock-reset")
-    .WithEmote(IClock.UxEmoji["reset"])
-    .WithDefault(false);
+    .WithEmote(IClock.UxEmoji["reset"]);
   }
   public static ButtonBuilder ResetButton()
   {
@@ -42,9 +41,22 @@ public interface IClock
   {
     return new SelectMenuOptionBuilder()
     .WithLabel(IClock.AdvanceLabel)
+    .WithDescription("Advance the clock without rolling Ask the Oracle.")
     .WithValue("clock-advance")
-    .WithEmote(new Emoji("🕦"))
-    .WithDefault(false);
+    .WithEmote(new Emoji("🕦"));
+  }
+  public static SelectMenuOptionBuilder AdvanceAskOption(AskOption askOption)
+  {
+    int odds = (int)askOption;
+    string label = $"{AdvanceLabel} ({OracleAnswer.OddsString[odds]})";
+    IEmote emoji = OddsEmoji[odds];
+
+    return new SelectMenuOptionBuilder()
+    .WithLabel(label)
+    .WithDescription($"{odds}% chance for the clock to advance.")
+    .WithValue($"clock-advance:{odds}")
+    .WithEmote(emoji)
+    ;
   }
   public static ButtonBuilder AdvanceButton()
   {

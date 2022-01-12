@@ -18,8 +18,8 @@ public class ClockCommand : InteractionModuleBase
   {
     CampaignClock campaignClock = new(segments, 0, title, description);
     await RespondAsync(
-      embed: campaignClock.ToEmbed().Build()
-      // components: campaignClock.MakeComponents().Build()
+      embed: campaignClock.ToEmbed().Build(),
+      components: campaignClock.MakeComponents().Build()
       );
   }
 

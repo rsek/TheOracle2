@@ -14,32 +14,44 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
   {
     Random = random;
   }
-  [ComponentInteraction("progress-mark:*")]
-  public async Task MarkProgress(string tickString)
+  [ComponentInteraction("progress-mark:*,*")]
+  public async Task MarkProgress(string tickString, string currentString
+  )
   {
+    var ticksAdded = int.Parse(tickString);
+    var ticksOld = int.Parse(currentString);
+    var ticksNew = ticksOld + ticksAdded;
     var interaction = Context.Interaction as SocketMessageComponent;
-    int ticksToAdd = int.Parse(tickString);
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
+    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticksNew);
     await interaction.UpdateAsync(msg =>
     {
-      // TODO: cleanup now that the progress classes handle their own range restrictions
-      progressTrack.Ticks += ticksToAdd;
-      progressTrack.Ticks = Math.Max(0, Math.Min(progressTrack.Ticks, 40));
       msg.Components = progressTrack.MakeComponents().Build();
       msg.Embed = progressTrack.ToEmbed().Build();
     });
   }
-  [ComponentInteraction("progress-clear:*")]
-  public async Task ClearProgress(string tickString
+  [ComponentInteraction("progress-clear:*,*")]
+  public async Task ClearProgress(string tickString, string currentString
   )
   {
-    await MarkProgress("-" + tickString);
+    var ticksSubtracted = int.Parse(tickString);
+    var ticksOld = int.Parse(currentString);
+    var ticksNew = ticksOld - ticksSubtracted;
+    var interaction = Context.Interaction as SocketMessageComponent;
+    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticksNew);
+    await interaction.UpdateAsync(msg =>
+    {
+      msg.Components = progressTrack.MakeComponents().Build();
+      msg.Embed = progressTrack.ToEmbed().Build();
+    });
   }
-  [ComponentInteraction("progress-recommit:*")]
-  public async Task RecommitProgress()
+  [ComponentInteraction("progress-recommit:*,*")]
+  public async Task RecommitProgress(string currentTicksString, string rankString)
   {
     var interaction = Context.Interaction as SocketMessageComponent;
-    IProgressTrack.Recommit recommit = new(Random, interaction.Message.Embeds.FirstOrDefault());
+    var currentTicks = int.Parse(currentTicksString);
+    var rank = Enum.Parse<ChallengeRank>(rankString);
+    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks);
+    IProgressTrack.Recommit recommit = new(Random, progressTrack.ToEmbed().Build());
     await interaction.UpdateAsync(msg =>
     {
       msg.Embed = recommit.NewTrack.ToEmbed().Build();
@@ -48,41 +60,45 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     await interaction.FollowupAsync(embed: recommit.ToAlertEmbed().Build());
   }
   [ComponentInteraction("progress-roll:*")]
-  public async Task RollProgress(string scoreString)
+  public async Task RollProgress(string ticksString)
   {
     // TODO: doesn't need to touch the embed since progress is embedded in the button; a component refresh should be enough.
+    var ticks = int.Parse(ticksString);
+    var score = ITrack.GetScore(ticks);
     var interaction = Context.Interaction as SocketMessageComponent;
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
+    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticks);
     await interaction.RespondAsync(embed: progressTrack.Roll(Random).ToEmbed().Build());
   }
-  [ComponentInteraction("progress-menu")]
-  public async Task ProgressMenu(string[] values)
+  [ComponentInteraction("progress-menu:*,*")]
+  public async Task ProgressMenu(string rankString, string currentTicks, string[] values)
   {
-    string optionValue = values.FirstOrDefault();
+    string option = values.FirstOrDefault();
     var interaction = Context.Interaction as SocketMessageComponent;
-    IProgressTrack track = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
-    string operation = optionValue.Split(":")[0];
-    string operationArg = optionValue.Split(":")[1];
+    // IProgressTrack track = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticks);
+    string operation = option.Split(":")[0];
+    string operationArg = option.Split(":")[1];
     switch (operation)
     {
       case "progress-clear":
-        await ClearProgress(operationArg);
+        await ClearProgress(operationArg, currentTicks);
         return;
       case "progress-mark":
-        await MarkProgress(operationArg);
+        await MarkProgress(operationArg, currentTicks);
         return;
       case "progress-roll":
-        await RollProgress(operationArg);
+        int score = int.Parse(currentTicks) / 4;
+        await RollProgress(score.ToString());
         return;
       case "progress-recommit":
-        await RecommitProgress();
+        await RecommitProgress(currentTicks, rankString);
         return;
     }
-    await interaction.UpdateAsync(msg =>
-    {
-      msg.Components = track.MakeComponents().Build();
-      msg.Embed = track.ToEmbed().Build();
-    });
+    // do an after interaction function to automatically resend the components?
+    // await interaction.UpdateAsync(msg =>
+    // {
+    //   msg.Components = track.MakeComponents().Build();
+    //   msg.Embed = track.ToEmbed().Build();
+    // });
     return;
   }
   [ComponentInteraction("clock-reset")]
@@ -110,8 +126,10 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     });
     await interaction.FollowupAsync(embed: clock.AlertEmbed().Build());
   }
-  [ComponentInteraction("clock-menu")]
-  public async Task ClockMenu(string[] values)
+
+  // TODO: refactor in same style as progress menu
+  [ComponentInteraction("clock-menu:*,*")]
+  public async Task ClockMenu(string filledString, string segmentsString, string[] values)
   {
     string optionValue = values.FirstOrDefault();
     var interaction = Context.Interaction as SocketMessageComponent;
@@ -167,21 +185,24 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
       msg.Components = clock.MakeComponents().Build();
       msg.Embed = clock.ToEmbed().Build();
     });
-    await interaction.FollowupAsync(embed: clock.AlertEmbed().Build());
+    if (optionValue != "clock-reset")
+    {
+      await interaction.FollowupAsync(embed: clock.AlertEmbed().Build());
+    }
     return;
   }
-  [ComponentInteraction("scene-challenge-menu")]
-  public async Task SceneChallengeMenu(string[] values)
+  [ComponentInteraction("scene-challenge-menu:*,*,*,*")]
+  public async Task SceneChallengeMenu(string ticksString, string rankString, string filledString, string segmentsString, string[] values)
   {
     string optionValue = values.FirstOrDefault();
     if (optionValue.StartsWith("progress"))
     {
-      await ProgressMenu(values);
+      await ProgressMenu(rankString, ticksString, values);
       return;
     }
     if (optionValue.StartsWith("clock"))
     {
-      await ClockMenu(values);
+      await ClockMenu(filledString, segmentsString, values);
       return;
     }
   }

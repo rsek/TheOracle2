@@ -9,6 +9,14 @@ public abstract class ProgressTrack : IProgressTrack
     Title = embed.Title;
     Description = embed.Description;
   }
+
+  protected internal ProgressTrack(Embed embed, int ticks)
+  {
+    Rank = IProgressTrack.ParseEmbedRank(embed);
+    Ticks = ticks;
+    Title = embed.Title;
+    Description = embed.Description;
+  }
   protected internal ProgressTrack(ChallengeRank rank, int ticks = 0, string title = "", string description = "")
   {
     Rank = rank;
@@ -35,7 +43,7 @@ public abstract class ProgressTrack : IProgressTrack
   public virtual ButtonBuilder ClearButton()
   {
     return IProgressTrack
-      .ClearButton(RankData.MarkTrack)
+      .ClearButton(RankData.MarkTrack, Ticks)
         .WithDisabled(Ticks == 0);
   }
   public virtual SelectMenuOptionBuilder ClearOption()
@@ -45,7 +53,7 @@ public abstract class ProgressTrack : IProgressTrack
   public virtual ButtonBuilder MarkButton()
   {
     return IProgressTrack
-      .MarkButton(RankData.MarkTrack)
+      .MarkButton(RankData.MarkTrack, Ticks)
         .WithDisabled(Score >= ITrack.TrackSize);
   }
   public virtual SelectMenuOptionBuilder MarkOption()
@@ -55,17 +63,28 @@ public abstract class ProgressTrack : IProgressTrack
   public virtual ButtonBuilder ResolveButton()
   {
     return IProgressTrack
-      .ResolveButton(Score);
+      .ResolveButton(Ticks);
   }
   public virtual SelectMenuOptionBuilder ResolveOption()
   {
-    return IProgressTrack.ResolveOption(Score);
+    return IProgressTrack.ResolveOption(Ticks);
   }
   public virtual ButtonBuilder RecommitButton()
   {
     return IProgressTrack
       .RecommitButton(Ticks, Rank);
   }
+
+
+  public virtual SelectMenuBuilder MenuStub(ChallengeRank rank, int ticks, string prefix = "progress-")
+  {
+    return new SelectMenuBuilder()
+    .WithCustomId(prefix + $"menu:{rank},{ticks}")
+    .WithMinValues(0)
+    .WithPlaceholder("Manage progress...")
+    ;
+  }
+
 
   public virtual SelectMenuOptionBuilder RecommitOption()
   {
