@@ -3,6 +3,10 @@ using Discord.WebSocket;
 using TheOracle2.GameObjects;
 namespace TheOracle2;
 
+
+/// <summary>
+/// Progress and clock message components that are used by multiple slash commands.
+/// </summary>
 public class CommonComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
   private readonly Random Random;
@@ -18,6 +22,7 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
     await interaction.UpdateAsync(msg =>
     {
+      // TODO: cleanup now that the progress classes handle their own range restrictions
       progressTrack.Ticks += ticksToAdd;
       progressTrack.Ticks = Math.Max(0, Math.Min(progressTrack.Ticks, 40));
       msg.Components = progressTrack.MakeComponents().Build();
@@ -45,6 +50,7 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
   [ComponentInteraction("progress-roll:*")]
   public async Task RollProgress(string scoreString)
   {
+    // TODO: doesn't need to touch the embed since progress is embedded in the button; a component refresh should be enough.
     var interaction = Context.Interaction as SocketMessageComponent;
     var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
     await interaction.RespondAsync(embed: progressTrack.Roll(Random).ToEmbed().Build());
@@ -110,7 +116,8 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     string optionValue = values.FirstOrDefault();
     var interaction = Context.Interaction as SocketMessageComponent;
     var clock = IClock.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
-    if (int.TryParse(optionValue.Replace("clock-advance-", ""), out int odds))
+    var fractionString = $"{clock.Filled}/{clock.Segments}";
+    if (int.TryParse(optionValue.Replace("clock-advance:", ""), out int odds))
     {
       OracleAnswer answer = new(Random, odds, $"Does the clock *{clock.Title}* advance?");
       EmbedBuilder answerEmbed = answer.ToEmbed();
@@ -121,7 +128,7 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
         {
           answerEmbed.WithFooter("You rolled a match! Envision how this situation or project gains dramatic support or inertia.");
         }
-        string append = answer.IsMatch ? $"The clock advances **twice** to {clock.ToString()}." : $"The clock advances to {clock.ToString()}.";
+        string append = answer.IsMatch ? $"The clock advances **twice** to {fractionString}." : $"The clock advances to {fractionString}.";
         answerEmbed.Description += "\n" + append;
         answerEmbed = answerEmbed.WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled]);
       }
@@ -131,7 +138,7 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
         {
           answerEmbed = answerEmbed.WithFooter("You rolled a match! Envision a surprising turn of events which pits new factors or forces against the clock.");
         }
-        answerEmbed.Description += "\n" + $"The clock remains at {clock.ToString()}";
+        answerEmbed.Description += "\n" + $"The clock remains at {fractionString}";
       }
       answerEmbed = answerEmbed
         .WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled])
