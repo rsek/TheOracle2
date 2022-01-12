@@ -7,7 +7,7 @@ public class SceneChallenge : ProgressTrack, IClock
     Filled = clockData.Item1;
     Segments = clockData.Item2;
   }
-  public SceneChallenge(ClockSize segments = (ClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(rank, ticks, title, description)
+  public SceneChallenge(SceneChallengeClockSize segments = (SceneChallengeClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(rank, ticks, title, description)
   {
     Filled = filledSegments;
     Segments = (int)segments;
