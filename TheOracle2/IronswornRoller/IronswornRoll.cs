@@ -1,5 +1,6 @@
 ﻿using TheOracle2.GameObjects;
 using TheOracle2.IronswornRoller;
+using System.Text.RegularExpressions;
 
 namespace TheOracle2;
 
@@ -43,8 +44,16 @@ public abstract class IronswornRoll
   /// <summary>A Markdown string representation of the Challenge Dice values for use in text output.</summary>
   public string ToChallengeString() => $"{ChallengeDie1.Value}, {ChallengeDie2.Value}";
 
+  public virtual EmbedFieldBuilder ChallengeDiceField() => new EmbedFieldBuilder()
+    .WithName("Challenge Dice")
+    .WithValue(ToChallengeString());
+
   /// <summary>A Markdown string representation of the Score (and any relevant arithmetic) for use in text output.</summary>
   public virtual string ToScoreString() => $"**{Score}**";
+
+  public virtual EmbedFieldBuilder ScoreField() => new EmbedFieldBuilder()
+    .WithName("Score")
+    .WithValue(ToScoreString());
 
   /// <summary>A Markdown string representation of the roll and any user-provided text, for use in text output.</summary>
   public override string ToString()
@@ -132,4 +141,28 @@ public abstract class IronswornRoll
 
   // <summary>A string description of the roll type (e.g. "Progress Roll", "Action Roll"), for use in labelling output.</summary>
   public virtual string RollTypeLabel { get => "Roll"; }
+
+  public static int[] ParseChallengeDiceValues(Embed embed)
+  {
+    EmbedField diceField = embed.Fields.FirstOrDefault(field => field.Name == "Challenge Dice");
+    int[] diceValues = diceField.Value.Split(", ").Select(item => int.Parse(item)) as int[];
+    return diceValues;
+  }
+
+  public static int ParseScore(Embed embed)
+  {
+    EmbedField scoreField = embed.Fields.FirstOrDefault(field => field.Name.Contains("Score"));
+    Regex pattern = new Regex(@"\*\*([0-9]{1,2})\*\*");
+    int score = int.Parse(pattern.Match(scoreField.Value).ToString());
+    return score;
+  }
+
+  public static int[] ParseScoreAdds(Embed embed)
+  {
+    EmbedField scoreField = embed.Fields.FirstOrDefault(field => field.Name == "Action Score");
+    Regex addsPattern = new Regex(@"([0-9]+) \+ ([0-9]+) \+ ([0-9]+) = \*\*([0-9]{1,2})\*\*");
+    int[] adds = addsPattern.Match(scoreField.Value).Captures.Select(substring => int.Parse(substring.ToString())) as int[];
+    return adds;
+    // needs needs to account for ~~ strikeout characters from momentum etc. should grab them anyways since the point is presumably to get the original roll values.
+  }
 }
