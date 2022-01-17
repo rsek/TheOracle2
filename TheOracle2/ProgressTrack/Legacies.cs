@@ -1,6 +1,6 @@
 namespace TheOracle2.GameObjects;
 
-public class Legacies : List<LegacyTrack>
+public class Legacies : List<LegacyTrack>, IWidget
 {
   public Legacies(Embed embed)
   {
@@ -22,8 +22,7 @@ public class Legacies : List<LegacyTrack>
   public int Xp => this.Select(item => item.Xp).Sum();
   public EmbedBuilder ToEmbed()
   {
-    EmbedBuilder embed = new EmbedBuilder()
-      .WithTitle("Legacies")
+    EmbedBuilder embed = IWidget.EmbedStub(this)
       .AddField("XP Earned", Xp.ToString(), true)
       .AddField("XP Spent", "0", true);
     foreach (LegacyTrack legacy in this)
@@ -32,6 +31,10 @@ public class Legacies : List<LegacyTrack>
     }
     return embed;
   }
+  public string Title => "Legacies";
+  public string EmbedCategory { get; set; }
+  public string Description { get; set; }
+  public string Footer { get; set; }
   public ComponentBuilder MakeComponents()
   {
     SelectMenuBuilder selectMenu = new SelectMenuBuilder()

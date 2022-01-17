@@ -5,14 +5,13 @@ public class CampaignClock : Clock
 
   public CampaignClock(ClockSize segments, int filledSegments, string title, string description = "") : base(segments, filledSegments, title, description) { }
   public override string EmbedCategory => "Campaign Clock";
-  public override string FillMessage => "The event is triggered or the project is complete. Envision the outcome and the impact on your setting.";
-
+  public override string LogMessage => "The event is triggered or the project is complete. Envision the outcome and the impact on your setting.";
 
   public SelectMenuBuilder MakeSelectMenu()
   {
     SelectMenuBuilder selectMenu = new SelectMenuBuilder()
       .WithPlaceholder("Advance clock...")
-      .WithCustomId("clock-menu")
+      .WithCustomId($"clock-menu:{Filled}/{Segments}")
       .WithMinValues(0)
       .WithMaxValues(1)
       .AddOption("test", "test");
@@ -21,7 +20,7 @@ public class CampaignClock : Clock
   public override ComponentBuilder MakeComponents()
   {
     SelectMenuBuilder menu = new SelectMenuBuilder()
-        .WithCustomId("clock-menu")
+        .WithCustomId($"clock-menu:{Filled}/{Segments}")
         .WithMinValues(0);
     if (!IsFull)
     {

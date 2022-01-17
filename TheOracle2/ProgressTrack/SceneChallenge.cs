@@ -18,35 +18,19 @@ public class SceneChallenge : ProgressTrack, IClock
     Filled = filledSegments;
     Segments = (int)segments;
   }
-  public override string EmbedCategory { get; } = "Scene Challenge";
-  public string FillMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
+  public override string EmbedCategory => "Scene Challenge";
+  public string FooterMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
+  public override string ResolveMoveName => "Resolve Scene Challenge";
+  public override string TrackCategory => "Scene Challenge";
+  public override bool CanRecommit => false;
+  public override string MarkAlertTitle => "Mark Progress";
   public int Segments { get; }
   public int Filled { get; set; }
   public bool IsFull => Filled >= Segments;
   public override EmbedBuilder ToEmbed()
   {
-    return IClock.AddClockTemplate(base.ToEmbed(), Segments, Filled);
-    ;
+    return IClock.AddClockTemplate(base.ToEmbed(), this);
   }
-  public EmbedBuilder AlertEmbed()
-  {
-    return IClock.AlertEmbedTemplate(Segments, Filled, FillMessage)
-    .WithAuthor($"{EmbedCategory}: {Title}");
-  }
-  // public override ButtonBuilder ResolveButton()
-  // {
-  //   return base
-  //     .ResolveButton()
-  //     .WithLabel("Resolve challenge")
-  //   ;
-  // }
-  // public override ButtonBuilder MarkButton()
-  // {
-  //   return base
-  //     .MarkButton()
-  //     .WithDisabled(Score >= ITrack.TrackSize || IsFull)
-  //   ;
-  // }
   public SelectMenuBuilder MakeSelectMenu()
   {
     SelectMenuBuilder menu = new SelectMenuBuilder()
@@ -57,11 +41,11 @@ public class SceneChallenge : ProgressTrack, IClock
     ;
     if (!IsFull)
     {
-      if (Score < ITrack.TrackSize) { menu = menu.AddOption(IProgressTrack.MarkOption(RankData.MarkTrack)); }
+      if (Score < ITrack.TrackSize) { menu = menu.AddOption(MarkOption()); }
       menu = menu.AddOption(IClock.AdvanceOption());
     }
-    menu = menu.AddOption(IProgressTrack.ResolveOption(Score));
-    if (Ticks > 0) { menu = menu.AddOption(IProgressTrack.ClearOption(RankData.MarkTrack)); }
+    menu = menu.AddOption(ResolveOption());
+    if (Ticks > 0) { menu = menu.AddOption(ClearOption()); }
     if (Filled > 0) { menu = menu.AddOption(IClock.ResetOption()); }
     return menu;
   }
@@ -71,4 +55,7 @@ public class SceneChallenge : ProgressTrack, IClock
       .WithSelectMenu(MakeSelectMenu())
       ;
   }
+
+  // TODO: this should probably return the scene challenge specific versions of the FS and SaA moves, meaning rsek needs to include them in Dataforged. while no formal move exists for progress resolution, its rules ought to be included in some way as well.
+  public override Tuple<MoveNumber, string>[] MoveReferences => Array.Empty<Tuple<MoveNumber, string>>();
 }

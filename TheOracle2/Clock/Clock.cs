@@ -25,7 +25,13 @@ public abstract class Clock : IClock
   public int Filled { get; set; }
   public string Title { get; set; }
   public string Description { get; set; }
+  public string Footer { get; set; }
   public abstract string EmbedCategory { get; }
+  public string AlertFooter { get; }
+  public bool AlertOnIncrement { get; } = true;
+  public bool AlertOnDecrement { get; }
+  public bool LogOnIncrement { get; } = true;
+  public bool LogOnDecrement { get; } = true;
   public bool IsFull => Filled >= Segments;
 
   public virtual EmbedBuilder ToEmbed()
@@ -35,13 +41,13 @@ public abstract class Clock : IClock
       .WithTitle(Title)
       .WithDescription(Description)
     ;
-    return IClock.AddClockTemplate(embed, Segments, Filled);
+    return IClock.AddClockTemplate(embed, this);
   }
   public EmbedBuilder AlertEmbed()
   {
-    return IClock.AlertEmbedTemplate(Segments, Filled, FillMessage);
+    return IClock.AlertStub(this);
   }
-  public virtual string FillMessage { get; set; } = "";
+  public virtual string LogMessage => Filled == Segments ? "The clock fills!" : $"The clock advances to {Filled}/{Segments}";
   public virtual ComponentBuilder MakeComponents()
   {
     return new ComponentBuilder()

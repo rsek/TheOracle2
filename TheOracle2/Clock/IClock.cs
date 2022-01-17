@@ -1,33 +1,20 @@
 namespace TheOracle2.GameObjects;
-public interface IClock
+public interface IClock : ILogWidget
 {
-  public string FillMessage { get; set; }
   public int Segments { get; }
   public int Filled { get; set; }
   public bool IsFull { get; }
-  public string Title { get; set; }
-  public string Description { get; set; }
-  public string EmbedCategory { get; }
-  public EmbedBuilder ToEmbed();
-  public EmbedBuilder AlertEmbed();
-  public ComponentBuilder MakeComponents();
-  public static EmbedBuilder AlertEmbedTemplate(int segments, int filled, string fillMessage)
+  public static EmbedBuilder AlertStub(IClock clock)
   {
-    var title = filled == segments ? "The clock fills!" : $"The clock advances to {filled}/{segments}";
-    EmbedBuilder embed = new EmbedBuilder()
-      .WithTitle(title);
-    if (filled == segments)
-    {
-      embed = embed.WithDescription(fillMessage);
-    }
-    return AddClockTemplate(embed, segments, filled);
+    EmbedBuilder embed = AddClockTemplate(ILogWidget.AlertStub(clock), clock);
+    return embed;
   }
   public static SelectMenuOptionBuilder ResetOption()
   {
     return new SelectMenuOptionBuilder()
     .WithLabel("Reset clock")
     .WithValue("clock-reset")
-    .WithEmote(IClock.UxEmoji["reset"]);
+    .WithEmote(Emoji["reset"]);
   }
   public static ButtonBuilder ResetButton()
   {
@@ -35,15 +22,15 @@ public interface IClock
     .WithLabel("Reset Clock")
     .WithStyle(ButtonStyle.Secondary)
     .WithCustomId("clock-reset")
-    .WithEmote(IClock.UxEmoji["reset"]);
+    .WithEmote(Emoji["reset"]);
   }
   public static SelectMenuOptionBuilder AdvanceOption()
   {
     return new SelectMenuOptionBuilder()
-    .WithLabel(IClock.AdvanceLabel)
+    .WithLabel(AdvanceLabel)
     .WithDescription("Advance the clock without rolling Ask the Oracle.")
     .WithValue("clock-advance")
-    .WithEmote(new Emoji("🕦"));
+    .WithEmote(Emoji["advance"]);
   }
   public static SelectMenuOptionBuilder AdvanceAskOption(AskOption askOption)
   {
@@ -61,39 +48,42 @@ public interface IClock
   public static ButtonBuilder AdvanceButton()
   {
     return new ButtonBuilder()
-      .WithLabel(IClock.AdvanceLabel)
+      .WithLabel(AdvanceLabel)
       .WithStyle(ButtonStyle.Danger)
       .WithCustomId("clock-advance")
-      .WithEmote(new Emoji("🕦"));
+      .WithEmote(Emoji["advance"]);
   }
   public static string AdvanceLabel => "Advance Clock";
-  public static EmbedFieldBuilder ClockField(int segments, int filled)
+  public static EmbedFieldBuilder ClockField(IClock clock)
   {
-    return new EmbedFieldBuilder().WithName("Clock").WithValue($"{filled}/{segments}").WithIsInline(true);
+    return new EmbedFieldBuilder()
+      .WithName("Clock")
+      .WithValue($"{clock.Filled}/{clock.Segments}");
   }
-  public static EmbedBuilder AddClockTemplate(EmbedBuilder embed, int segments, int filled)
+  public static EmbedBuilder AddClockTemplate(EmbedBuilder embed, IClock clock)
   {
     return embed
     .WithThumbnailUrl(
-      IClock.Images[segments][filled])
+      IClock.Images[clock.Segments][clock.Filled])
     .WithColor(
-      IClock.ColorRamp[segments][filled])
+      IClock.ColorRamp[clock.Segments][clock.Filled])
     .AddField(
-      ClockField(segments, filled)
+      ClockField(clock).WithIsInline(true)
       );
   }
   public static Tuple<int, int> ParseClock(Embed embed)
   {
     EmbedField clockField = embed.Fields.FirstOrDefault(field => field.Name == "Clock");
     string[] valueStrings = clockField.Value.Split("/");
-    int[] values = valueStrings.Select(value => int.Parse(value)).ToArray();
+    int[] values = valueStrings.Select<string, int>(value => int.Parse(value)).ToArray();
     return new Tuple<int, int>(values[0], values[1]);
   }
-  public static readonly Dictionary<string, Emoji> UxEmoji = new()
+  public static readonly Dictionary<string, IEmote> Emoji = new()
   {
-    { "reset", new Emoji("↩️") }
+    { "reset", new Emoji("↩️") },
+    { "advance", new Emoji("🕦") }
   };
-  public static readonly Dictionary<int, Emoji> OddsEmoji = new()
+  public static readonly Dictionary<int, IEmote> OddsEmoji = new()
   {
     { 10, new Emoji("🕐") },
     { 25, new Emoji("🕒") },

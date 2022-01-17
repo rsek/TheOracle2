@@ -46,9 +46,11 @@ public class ClockCommand : InteractionModuleBase
     [Summary(description: "The number of clock segments. Default = 6, severe disadvantage = 4, strong advantage = 8.")]
     SceneChallengeClockSize segments=SceneChallengeClockSize.Six,
     [Summary(description: "An optional description.")]
-    string description = "")
+    string description = "",
+    [Summary(description: "A score to pre-set the track, if desired.")] [MinValue(0)][MaxValue(10)]
+    int score = 0)
   {
-    SceneChallenge sceneChallenge = new(segments, 0, 0, title, description);
+    SceneChallenge sceneChallenge = new(segments, 0, ticks: score * ITrack.BoxSize, title: title, description: description);
     EmbedBuilder embed = sceneChallenge.ToEmbed();
     ComponentBuilder components = sceneChallenge.MakeComponents();
     await RespondAsync(

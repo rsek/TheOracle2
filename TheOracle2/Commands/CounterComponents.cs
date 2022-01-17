@@ -3,39 +3,52 @@ using Discord.WebSocket;
 using TheOracle2.GameObjects;
 namespace TheOracle2;
 
-
 /// <summary>
 /// Progress and clock message components that are used by multiple slash commands.
 /// </summary>
-public class CommonComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+public class CounterComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
   private readonly Random Random;
-  public CommonComponents(Random random)
+  public CounterComponents(Random random)
   {
     Random = random;
   }
-  [ComponentInteraction("progress-mark:*,*")]
-  public async Task MarkProgress(string tickString, string currentString
+  [ComponentInteraction("progress-mark:*,*,*")]
+  public async Task MarkProgress(string addTicksString, string currentTicksString, string alertTitle
   )
   {
-    var ticksAdded = int.Parse(tickString);
-    var ticksOld = int.Parse(currentString);
-    var ticksNew = ticksOld + ticksAdded;
-    var interaction = Context.Interaction as SocketMessageComponent;
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticksNew);
+    SocketMessageComponent interaction = Context.Interaction as SocketMessageComponent;
+
+    if (!int.TryParse(currentTicksString, out int currentTicks))
+    { throw new ArgumentException($"Unable to parse current ticks from {currentTicksString}"); }
+
+    if (!int.TryParse(addTicksString, out int addedTicks))
+    { throw new ArgumentException($"Unable to parse added ticks from {addedTicks}"); }
+
+    ProgressTrack progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
+
+    EmbedBuilder alert = progressTrack.Mark(addedTicks, alertTitle);
+
     await interaction.UpdateAsync(msg =>
     {
       msg.Components = progressTrack.MakeComponents().Build();
       msg.Embed = progressTrack.ToEmbed().Build();
     });
+    await interaction.FollowupAsync(embed: alert.Build());
   }
   [ComponentInteraction("progress-clear:*,*")]
-  public async Task ClearProgress(string tickString, string currentString
+  public async Task ClearProgress(string subtractedTickString, string currentTicksString
   )
   {
-    var ticksSubtracted = int.Parse(tickString);
-    var ticksOld = int.Parse(currentString);
-    var ticksNew = ticksOld - ticksSubtracted;
+    if (!int.TryParse(subtractedTickString, out int subtractTicks))
+    {
+      throw new Exception($"Unable to parse {nameof(subtractedTickString)} from {subtractedTickString}");
+    }
+    if (!int.TryParse(currentTicksString, out int currentTicks))
+    {
+      throw new Exception($"Unable to parse {nameof(currentTicks)} from {currentTicksString}");
+    }
+    var ticksNew = currentTicks - subtractTicks;
     var interaction = Context.Interaction as SocketMessageComponent;
     var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticksNew);
     await interaction.UpdateAsync(msg =>
@@ -45,29 +58,39 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     });
   }
   [ComponentInteraction("progress-recommit:*,*")]
-  public async Task RecommitProgress(string currentTicksString, string rankString)
+  public async Task RecommitProgress(string rankString, string currentTicksString)
   {
-    var interaction = Context.Interaction as SocketMessageComponent;
-    var currentTicks = int.Parse(currentTicksString);
-    var rank = Enum.Parse<ChallengeRank>(rankString);
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks);
-    IProgressTrack.Recommit recommit = new(Random, progressTrack.ToEmbed().Build());
+    SocketMessageComponent interaction = Context.Interaction as SocketMessageComponent;
+    if (!int.TryParse(currentTicksString, out int currentTicks))
+    {
+      throw new Exception($"Unable to parse {nameof(currentTicks)} from {currentTicksString}");
+    }
+    ChallengeRank rank = Enum.Parse<ChallengeRank>(rankString);
+    ProgressTrack progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
+    EmbedBuilder recommitAlert = progressTrack.Recommit(Random);
     await interaction.UpdateAsync(msg =>
     {
-      msg.Embed = recommit.NewTrack.ToEmbed().Build();
-      msg.Components = recommit.NewTrack.MakeComponents().Build();
+      msg.Embed = progressTrack.ToEmbed().Build();
+      msg.Components = progressTrack.MakeComponents().Build();
     });
-    await interaction.FollowupAsync(embed: recommit.ToAlertEmbed().Build());
+    await interaction.FollowupAsync(embed: recommitAlert.Build());
   }
   [ComponentInteraction("progress-roll:*")]
-  public async Task RollProgress(string ticksString)
+  public async Task RollProgress(string ticksString, string moveName)
   {
-    // TODO: doesn't need to touch the embed since progress is embedded in the button; a component refresh should be enough.
-    var ticks = int.Parse(ticksString);
+    if (!int.TryParse(ticksString, out int ticks))
+    {
+      throw new Exception($"Unable to parse {nameof(ticks)} from {ticksString}");
+    }
     var score = ITrack.GetScore(ticks);
     var interaction = Context.Interaction as SocketMessageComponent;
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticks);
-    await interaction.RespondAsync(embed: progressTrack.Roll(Random).ToEmbed().Build());
+    var embed = interaction.Message.Embeds.FirstOrDefault();
+    // var progressTrack = IProgressTrack.FromEmbed(embed);
+    var roll = new ProgressRoll(Random, score, embed.Title, moveName: moveName);
+    await ReplyAsync(
+      embed: roll.ToEmbed().Build(),
+      components: roll.MakeComponents().Build()
+    );
   }
   [ComponentInteraction("progress-menu:*,*")]
   public async Task ProgressMenu(string rankString, string currentTicks, string[] values)
@@ -76,21 +99,20 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
     var interaction = Context.Interaction as SocketMessageComponent;
     // IProgressTrack track = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticks);
     string operation = option.Split(":")[0];
-    string operationArg = option.Split(":")[1];
+    string[] arguments = option.Split(":").Length > 1 ? option.Split(":")[1].Split(",") : Array.Empty<string>();
     switch (operation)
     {
       case "progress-clear":
-        await ClearProgress(operationArg, currentTicks);
+        await ClearProgress(subtractedTickString: arguments[0], currentTicksString: currentTicks);
         return;
       case "progress-mark":
-        await MarkProgress(operationArg, currentTicks);
+        await MarkProgress(addTicksString: arguments[0], currentTicksString: currentTicks, alertTitle: arguments[1]);
         return;
       case "progress-roll":
-        int score = int.Parse(currentTicks) / 4;
-        await RollProgress(score.ToString());
+        await RollProgress(currentTicks, arguments[0]);
         return;
       case "progress-recommit":
-        await RecommitProgress(currentTicks, rankString);
+        await RecommitProgress(rankString: rankString, currentTicksString: currentTicks);
         return;
     }
     // do an after interaction function to automatically resend the components?
@@ -128,10 +150,18 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
   }
 
   // TODO: refactor in same style as progress menu
-  [ComponentInteraction("clock-menu:*,*")]
+  [ComponentInteraction("clock-menu:*/*")]
   public async Task ClockMenu(string filledString, string segmentsString, string[] values)
   {
     string optionValue = values.FirstOrDefault();
+    if (!int.TryParse(filledString, out int filled))
+    {
+      throw new Exception($"Unable to parse {nameof(filled)} from {filledString}");
+    }
+    if (!int.TryParse(segmentsString, out int segments))
+    {
+      throw new Exception($"Unable to parse {nameof(segments)} from {segmentsString}");
+    }
     var interaction = Context.Interaction as SocketMessageComponent;
     var clock = IClock.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
     var fractionString = $"{clock.Filled}/{clock.Segments}";
@@ -206,4 +236,5 @@ public class CommonComponents : InteractionModuleBase<SocketInteractionContext<S
       return;
     }
   }
+
 }

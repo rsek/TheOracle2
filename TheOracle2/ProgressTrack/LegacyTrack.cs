@@ -35,7 +35,7 @@ public class LegacyTrack : ITrack
   private int XpHalfRate => RemainderBoxes * XpPerBoxPast10;
   private string PlusValue => Ticks switch
   {
-    <= ITrack.MaxTicks => "",
+    <= ITrack.MaxTicks => string.Empty,
     <= ITrack.MaxTicks * 2 => $"+{ITrack.TrackSize}",
     > ITrack.MaxTicks * 2 => $"+{ITrack.TrackSize} ×{(int)(Ticks / ITrack.MaxTicks)}"
   };
@@ -52,8 +52,8 @@ public class LegacyTrack : ITrack
   };
   public string EmojiTrack => Ticks switch
   {
-    <= ITrack.MaxTicks => ITrack.TicksToEmojiBar(Ticks),
-    > ITrack.MaxTicks => ITrack.TicksToEmojiBar(Ticks % ITrack.MaxTicks)
+    <= ITrack.MaxTicks => ITrack.TicksToEmojiTrack(Ticks),
+    > ITrack.MaxTicks => ITrack.TicksToEmojiTrack(Ticks % ITrack.MaxTicks)
   };
   public EmbedFieldBuilder ToEmbedField()
   {
@@ -74,32 +74,19 @@ public class LegacyTrack : ITrack
     Ticks += addTicks;
   }
 
-  public SelectMenuOptionBuilder MarkRewardOption()
-  {
-    return new SelectMenuOptionBuilder()
-    .WithLabel($"Mark {Title} ()")
-    .WithValue($"legacy-mark:{Legacy}")
-    .WithEmote(Emoji[Legacy])
-    ;
-  }
   public SelectMenuOptionBuilder MarkRewardOption(ChallengeRank rank)
   {
     var ticks = RewardTicks(rank);
-    var emojiString = string.Concat(ITrack.TicksToEmoji(ticks).Select(emoji => emoji.ToString()));
-    return new SelectMenuOptionBuilder()
-    .WithLabel($"{Legacy}: {rank}")
-    .WithDescription($"Mark {ITrack.TickString(ticks)}")
-    .WithValue($"legacy-mark:{Legacy},{ticks}")
-    .WithEmote(Emoji[Legacy])
-    ;
+    return MarkRewardOption(ticks)
+      .WithLabel($"Mark {Legacy}: {rank}");
   }
   public SelectMenuOptionBuilder MarkRewardOption(int ticks)
   {
     return new SelectMenuOptionBuilder()
     .WithLabel($"Mark {Title}")
+    .WithDescription($"Mark {ITrack.TickString(ticks)}")
     .WithValue($"legacy-mark:{Legacy},{ticks}")
-    .WithEmote(Emoji[Legacy])
-    ;
+    .WithEmote(Emoji[Legacy]);
   }
   public SelectMenuOptionBuilder ClearOption(int ticks)
   {
@@ -109,37 +96,22 @@ public class LegacyTrack : ITrack
     .WithEmote(new Emoji("❌"))
     ;
   }
-
-  // TODO: clear tick option/button. should probably only present - different number of buttons = less likely to be blindly clicked thru. should also be the DANGER colour.
-  public static ButtonBuilder MarkRewardButton(Legacy legacy, ChallengeRank rank)
-  {
-    return new ButtonBuilder()
-      .WithCustomId($"legacy-mark:{legacy},{RewardTicks(rank)}")
-      .WithLabel($"{rank} ({IProgressTrack.TickString(IProgressTrack.RankInfo[rank].MarkLegacy)})")
-      .WithStyle(ButtonStyle.Primary)
-    ;
-  }
-  public static ComponentBuilder MarkRewardButtons(Legacy legacy)
-  {
-    ComponentBuilder components = new();
-    foreach (ChallengeRank rank in Enum.GetValues(typeof(ChallengeRank)))
-    {
-      components.WithButton(MarkRewardButton(legacy, rank));
-    }
-    return components;
-  }
   public static Tuple<Legacy, int> ParseLegacy(EmbedField embedField)
   {
-    int ticks = ITrack.EmojiStringToTicks(embedField.Value);
+    int ticks = ITrack.ParseTrack(embedField.Value);
     int extraBoxes = 0;
     string legacyString = "";
 
-    if (embedField.Name.Contains("+") && embedField.Name.Contains("×"))
+    if (embedField.Name.Contains('+') && embedField.Name.Contains('×'))
     {
-      int multiplier = int.Parse(embedField.Name.Split("×")[1]);
+      string multiplierString = embedField.Name.Split('×')[1];
+      if (!int.TryParse(multiplierString, out int multiplier))
+      {
+        throw new Exception($"Unable to parse {nameof(multiplier)} from {multiplierString}");
+      }
       extraBoxes = ITrack.TrackSize * multiplier;
     }
-    if (embedField.Name.Contains("+") && !embedField.Name.Contains("×"))
+    if (embedField.Name.Contains('+') && !embedField.Name.Contains('×'))
     {
       extraBoxes = ITrack.TrackSize;
     }
@@ -154,7 +126,7 @@ public class LegacyTrack : ITrack
     }
     return new Tuple<Legacy, int>(Enum.Parse<Legacy>(legacyString), ticks);
   }
-  public static readonly Dictionary<Legacy, Emoji> Emoji = new()
+  public static readonly Dictionary<Legacy, IEmote> Emoji = new()
   {
     { Legacy.Quests, new Emoji("✴️") },
     { Legacy.Bonds, new Emoji("🪢") },
