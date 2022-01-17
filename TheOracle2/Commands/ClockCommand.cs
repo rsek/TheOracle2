@@ -1,11 +1,17 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using TheOracle2.GameObjects;
+using TheOracle2.UserContent;
 namespace TheOracle2;
 
 [Group("clock", "Set a campaign clock, tension clock, or scene challenge (p. 230)")]
 public class ClockCommand : InteractionModuleBase
 {
+  public EFContext DbContext { get; set; }
+  public ClockCommand(EFContext dbContext)
+  {
+    DbContext = dbContext;
+  }
   [SlashCommand("campaign", "Set a campaign clock to resolve objectives and actions in the background of your campaign (p. 231)")]
   public async Task BuildCampaignClock(
     [Summary(description: "A title that makes it clear what project is complete or event triggered when the clock is filled.")]
@@ -50,7 +56,7 @@ public class ClockCommand : InteractionModuleBase
     [Summary(description: "A score to pre-set the track, if desired.")] [MinValue(0)][MaxValue(10)]
     int score = 0)
   {
-    SceneChallenge sceneChallenge = new(segments, 0, ticks: score * ITrack.BoxSize, title: title, description: description);
+    SceneChallenge sceneChallenge = new(DbContext, segments, 0, ticks: score * ITrack.BoxSize, title: title, description: description);
     EmbedBuilder embed = sceneChallenge.ToEmbed();
     ComponentBuilder components = sceneChallenge.MakeComponents();
     await RespondAsync(

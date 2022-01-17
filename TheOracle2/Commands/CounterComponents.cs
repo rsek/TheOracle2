@@ -1,6 +1,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using TheOracle2.GameObjects;
+using TheOracle2.UserContent;
 namespace TheOracle2;
 
 /// <summary>
@@ -8,11 +9,13 @@ namespace TheOracle2;
 /// </summary>
 public class CounterComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
-  private readonly Random Random;
-  public CounterComponents(Random random)
+  public CounterComponents(EFContext dbContext, Random random)
   {
     Random = random;
+    DbContext = dbContext;
   }
+  private readonly Random Random;
+  public EFContext DbContext { get; set; }
   [ComponentInteraction("progress-mark:*,*,*")]
   public async Task MarkProgress(string addTicksString, string currentTicksString, string alertTitle
   )
@@ -25,7 +28,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
     if (!int.TryParse(addTicksString, out int addedTicks))
     { throw new ArgumentException($"Unable to parse added ticks from {addedTicks}"); }
 
-    ProgressTrack progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
+    ProgressTrack progressTrack = IProgressTrack.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
 
     EmbedBuilder alert = progressTrack.Mark(addedTicks, alertTitle);
 
@@ -50,7 +53,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
     }
     var ticksNew = currentTicks - subtractTicks;
     var interaction = Context.Interaction as SocketMessageComponent;
-    var progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), ticksNew);
+    var progressTrack = IProgressTrack.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault(), ticksNew);
     await interaction.UpdateAsync(msg =>
     {
       msg.Components = progressTrack.MakeComponents().Build();
@@ -66,7 +69,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
       throw new Exception($"Unable to parse {nameof(currentTicks)} from {currentTicksString}");
     }
     ChallengeRank rank = Enum.Parse<ChallengeRank>(rankString);
-    ProgressTrack progressTrack = IProgressTrack.FromEmbed(interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
+    ProgressTrack progressTrack = IProgressTrack.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault(), currentTicks) as ProgressTrack;
     EmbedBuilder recommitAlert = progressTrack.Recommit(Random);
     await interaction.UpdateAsync(msg =>
     {
@@ -127,7 +130,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
   public async Task ResetClock()
   {
     var interaction = Context.Interaction as SocketMessageComponent;
-    var clock = IClock.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
+    var clock = IClock.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault());
     await interaction.UpdateAsync(msg =>
   {
     clock.Filled = 0;
@@ -139,7 +142,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
   public async Task AdvanceClock()
   {
     var interaction = Context.Interaction as SocketMessageComponent;
-    var clock = IClock.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
+    var clock = IClock.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault());
     await interaction.UpdateAsync(msg =>
     {
       clock.Filled++;
@@ -163,42 +166,45 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
       throw new Exception($"Unable to parse {nameof(segments)} from {segmentsString}");
     }
     var interaction = Context.Interaction as SocketMessageComponent;
-    var clock = IClock.FromEmbed(interaction.Message.Embeds.FirstOrDefault());
+    var clock = IClock.FromEmbed(DbContext, interaction.Message.Embeds.FirstOrDefault());
     var fractionString = $"{clock.Filled}/{clock.Segments}";
-    if (int.TryParse(optionValue.Replace("clock-advance:", ""), out int odds))
+    if (!int.TryParse(optionValue.Replace("clock-advance:", ""), out int odds))
     {
-      OracleAnswer answer = new(Random, odds, $"Does the clock *{clock.Title}* advance?");
-      EmbedBuilder answerEmbed = answer.ToEmbed();
-      if (answer.IsYes)
-      {
-        clock.Filled += answer.IsMatch ? 2 : 1;
-        if (answer.IsMatch)
-        {
-          answerEmbed.WithFooter("You rolled a match! Envision how this situation or project gains dramatic support or inertia.");
-        }
-        string append = answer.IsMatch ? $"The clock advances **twice** to {fractionString}." : $"The clock advances to {fractionString}.";
-        answerEmbed.Description += "\n" + append;
-        answerEmbed = answerEmbed.WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled]);
-      }
-      if (!answer.IsYes)
-      {
-        if (answer.IsMatch)
-        {
-          answerEmbed = answerEmbed.WithFooter("You rolled a match! Envision a surprising turn of events which pits new factors or forces against the clock.");
-        }
-        answerEmbed.Description += "\n" + $"The clock remains at {fractionString}";
-      }
-      answerEmbed = answerEmbed
-        .WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled])
-        .WithColor(IClock.ColorRamp[clock.Segments][clock.Filled]);
-      await interaction.UpdateAsync(msg =>
-      {
-        msg.Components = clock.MakeComponents().Build();
-        msg.Embed = clock.ToEmbed().Build();
-      });
-      await interaction.FollowupAsync(embed: answerEmbed.Build());
-      return;
+      throw new Exception($"Unable to parse integer from {optionValue}");
     }
+
+    OracleAnswer answer = new(Random, odds, $"Does the clock *{clock.Title}* advance?");
+    EmbedBuilder answerEmbed = answer.ToEmbed();
+    if (answer.IsYes)
+    {
+      clock.Filled += answer.IsMatch ? 2 : 1;
+      if (answer.IsMatch)
+      {
+        answerEmbed.WithFooter("You rolled a match! Envision how this situation or project gains dramatic support or inertia.");
+      }
+      string append = answer.IsMatch ? $"The clock advances **twice** to {fractionString}." : $"The clock advances to {fractionString}.";
+      answerEmbed.Description += "\n" + append;
+      answerEmbed = answerEmbed.WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled]);
+    }
+    if (!answer.IsYes)
+    {
+      if (answer.IsMatch)
+      {
+        answerEmbed = answerEmbed.WithFooter("You rolled a match! Envision a surprising turn of events which pits new factors or forces against the clock.");
+      }
+      answerEmbed.Description += "\n" + $"The clock remains at {fractionString}";
+    }
+    answerEmbed = answerEmbed
+      .WithThumbnailUrl(IClock.Images[clock.Segments][clock.Filled])
+      .WithColor(IClock.ColorRamp[clock.Segments][clock.Filled]);
+    await interaction.UpdateAsync(msg =>
+    {
+      msg.Components = clock.MakeComponents().Build();
+      msg.Embed = clock.ToEmbed().Build();
+    });
+    await interaction.FollowupAsync(embed: answerEmbed.Build());
+    return;
+
     switch (optionValue)
     {
       case "clock-reset":
@@ -221,8 +227,8 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
     }
     return;
   }
-  [ComponentInteraction("scene-challenge-menu:*,*,*,*")]
-  public async Task SceneChallengeMenu(string ticksString, string rankString, string filledString, string segmentsString, string[] values)
+  [ComponentInteraction("scene-challenge-menu:*,*,*/*")]
+  public async Task SceneChallengeMenu(string rankString, string ticksString, string filledString, string segmentsString, string[] values)
   {
     string optionValue = values.FirstOrDefault();
     if (optionValue.StartsWith("progress"))

@@ -17,11 +17,15 @@ namespace TheOracle2.UserContent
 
     public SelectMenuOptionBuilder ReferenceOption()
     {
+      string append = "…";
+      int maxChars = SelectMenuOptionBuilder.MaxDescriptionLength;
       SelectMenuOptionBuilder option = new();
+      string moveTrigger = Move.TriggerText ?? Move.Text;
+      string triggerString = moveTrigger.Length <= maxChars ? moveTrigger : moveTrigger[0..(maxChars - 1)] + append;
       option.WithLabel(Move.Name);
-      // TODO: add triggers to dataforged and insert them as descriptions here
       option.WithEmote(GetEmoji());
-      option.WithValue(Move.Name.ToLowerInvariant().Replace(" ", "_"));
+      option.WithValue(Move.Name);
+      option.WithDescription(triggerString);
       return option;
     }
     // commented out until there's a sensible way to implement ephemeral-reveal. probably inessential anyways.

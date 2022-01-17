@@ -1,19 +1,20 @@
 namespace TheOracle2.GameObjects;
+using TheOracle2.UserContent;
 public class SceneChallenge : ProgressTrack, IClock
 {
-  public SceneChallenge(Embed embed) : base(embed)
+  public SceneChallenge(EFContext dbContext, Embed embed) : base(dbContext, embed)
   {
     Tuple<int, int> clockData = IClock.ParseClock(embed);
     Filled = clockData.Item1;
     Segments = clockData.Item2;
   }
-  public SceneChallenge(Embed embed, int ticks) : base(embed, ticks)
+  public SceneChallenge(EFContext dbContext, Embed embed, int ticks) : base(dbContext, embed, ticks)
   {
     Tuple<int, int> clockData = IClock.ParseClock(embed);
     Filled = clockData.Item1;
     Segments = clockData.Item2;
   }
-  public SceneChallenge(SceneChallengeClockSize segments = (SceneChallengeClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(rank, ticks, title, description)
+  public SceneChallenge(EFContext dbContext, SceneChallengeClockSize segments = (SceneChallengeClockSize)6, int filledSegments = 0, int ticks = 0, string title = "", string description = "", ChallengeRank rank = ChallengeRank.Formidable) : base(dbContext, rank, ticks, title, description)
   {
     Filled = filledSegments;
     Segments = (int)segments;
@@ -21,7 +22,7 @@ public class SceneChallenge : ProgressTrack, IClock
   public override string EmbedCategory => "Scene Challenge";
   public string FooterMessage { get; set; } = "When the tension clock is filled, time is up. You must resolve the encounter by making a progress roll.";
   public override string ResolveMoveName => "Resolve Scene Challenge";
-  public override string TrackCategory => "Scene Challenge";
+  public override string TrackDescription => "Scene Challenge";
   public override bool CanRecommit => false;
   public override string MarkAlertTitle => "Mark Progress";
   public int Segments { get; }
@@ -33,12 +34,8 @@ public class SceneChallenge : ProgressTrack, IClock
   }
   public SelectMenuBuilder MakeSelectMenu()
   {
-    SelectMenuBuilder menu = new SelectMenuBuilder()
-    .WithCustomId("scene-challenge-menu")
-    .WithPlaceholder("Manage scene challenge...")
-    .WithMaxValues(1)
-    .WithMinValues(0)
-    ;
+    SelectMenuBuilder menu = ProgressTrack.MenuStub(this, "scene-challenge-", $",{Filled}/{Segments}");
+
     if (!IsFull)
     {
       if (Score < ITrack.TrackSize) { menu = menu.AddOption(MarkOption()); }
@@ -57,5 +54,5 @@ public class SceneChallenge : ProgressTrack, IClock
   }
 
   // TODO: this should probably return the scene challenge specific versions of the FS and SaA moves, meaning rsek needs to include them in Dataforged. while no formal move exists for progress resolution, its rules ought to be included in some way as well.
-  public override Tuple<MoveNumber, string>[] MoveReferences => Array.Empty<Tuple<MoveNumber, string>>();
+  public override string[] MoveReferences => Array.Empty<string>();
 }

@@ -9,7 +9,10 @@ namespace TheOracle2.GameObjects;
 /// </summary>
 public interface IMoveRef : IWidget
 {
-  public Tuple<MoveNumber, string>[] MoveReferences { get; }
+  public EFContext DbContext { get; }
+  public string[] MoveReferences { get; }
+
+  // public DataClasses.Move[] MoveRefs { get; }
   public SelectMenuBuilder MoveRefMenu();
 
   /// <summary>
@@ -20,17 +23,11 @@ public interface IMoveRef : IWidget
   public static List<SelectMenuOptionBuilder> MenuOptions(IMoveRef moveRefParent, string prefix = "")
   {
     List<SelectMenuOptionBuilder> options = new();
-    foreach ((MoveNumber move, string moveTrigger) in moveRefParent.MoveReferences)
+    foreach (string moveName in moveRefParent.MoveReferences)
     {
-      int id = (int)move;
-      string append = "…";
-      string label = Regex.Replace(move.ToString(), "([A-Z])", " $1");
-      string[] labelWords = label.Split(" ").Select(word => (word == "An" || word == "A" || word == "The") ? word.ToLowerInvariant() : word) as string[];
-      label = string.Join(" ", labelWords);
-      int maxChars = SelectMenuOptionBuilder.MaxDescriptionLength;
-      string triggerString = moveTrigger.Length <= maxChars ? moveTrigger : moveTrigger[0..(maxChars - 1)] + append;
-      // string casedMove = move.ToLowerInvariant().Replace(" ", "_");
-      options.Add(new SelectMenuOptionBuilder(label: label, value: $"{prefix}{id}", description: triggerString, emote: new Emoji("📖")));
+      DataClasses.Move moveData = moveRefParent.DbContext.Moves.Find(moveName);
+      DiscordMoveEntity moveEntity = new(moveData);
+      options.Add(moveEntity.ReferenceOption());
     }
     return options;
   }

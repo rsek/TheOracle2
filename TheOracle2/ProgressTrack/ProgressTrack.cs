@@ -1,28 +1,34 @@
 namespace TheOracle2.GameObjects;
+using TheOracle2.UserContent;
 
 public abstract class ProgressTrack : IProgressTrack, IMoveRef
 {
-  protected internal ProgressTrack(Embed embed)
+  protected internal ProgressTrack(EFContext dbContext, Embed embed)
   {
     Rank = IProgressTrack.ParseRank(embed);
     Ticks = ITrack.ParseTrack(embed);
     Title = embed.Title;
     Description = embed.Description;
+    DbContext = dbContext;
   }
-  protected internal ProgressTrack(Embed embed, int ticks)
+  protected internal ProgressTrack(EFContext dbContext, Embed embed, int ticks)
   {
     Rank = IProgressTrack.ParseRank(embed);
     Ticks = ticks;
     Title = embed.Title;
     Description = embed.Description;
+    DbContext = dbContext;
   }
-  protected internal ProgressTrack(ChallengeRank rank, int ticks = 0, string title = "", string description = "")
+  protected internal ProgressTrack(EFContext dbContext, ChallengeRank rank, int ticks = 0, string title = "", string description = "")
   {
     Rank = rank;
     Ticks = ticks;
     Title = title;
     Description = description;
+    DbContext = dbContext;
   }
+
+  public EFContext DbContext { get; }
   public bool LogOnIncrement { get; }
   public bool LogOnDecrement { get; }
   public bool AlertOnIncrement { get; }
@@ -40,11 +46,11 @@ public abstract class ProgressTrack : IProgressTrack, IMoveRef
   public RankData RankData => IProgressTrack.RankInfo[Rank];
   public int Score => ITrack.GetScore(Ticks);
   /// <inheritdoc/>
-  public virtual string EmbedCategory => TrackCategory + " Progress Track";
+  public virtual string EmbedCategory => TrackDescription + " Progress Track";
   /// <summary>
   /// A short string describing what the track represents, like "Vow" or "Combat Objective". Used in formatting certain output; EmbedCategory defaults to this + " Progress Track".
   /// </summary>
-  public abstract string TrackCategory { get; }
+  public abstract string TrackDescription { get; }
   /// <inheritdoc/>
   public string Title { get; set; }
   /// <inheritdoc/>
@@ -92,18 +98,19 @@ public abstract class ProgressTrack : IProgressTrack, IMoveRef
     return IProgressTrack.ResolveOption(ResolveMoveName);
   }
 
-  public abstract Tuple<MoveNumber, string>[] MoveReferences { get; }
+  public abstract string[] MoveReferences { get; }
 
   public virtual SelectMenuBuilder MoveRefMenu()
   {
     return IMoveRef.MenuBase(this);
   }
-  public static SelectMenuBuilder MenuStub(ChallengeRank rank, int ticks, string prefix = "progress-")
+  public static SelectMenuBuilder MenuStub(ProgressTrack track, string prefix = "progress-", string suffix = "")
   {
     return new SelectMenuBuilder()
-    .WithCustomId(prefix + $"menu:{rank},{ticks}")
+    .WithPlaceholder($"Manage {track.TrackDescription.ToLowerInvariant()}...")
+    .WithCustomId(prefix + $"menu:{track.Rank},{track.Ticks}" + suffix)
+    .WithMaxValues(1)
     .WithMinValues(0)
-    .WithPlaceholder("Manage progress...")
     ;
   }
   /// <summary>
@@ -112,11 +119,11 @@ public abstract class ProgressTrack : IProgressTrack, IMoveRef
   public abstract bool CanRecommit { get; }
   public virtual SelectMenuOptionBuilder RecommitOption()
   {
-    return IProgressTrack.RecommitOption($"Recommit to the {TrackCategory} after a Miss on {ResolveMoveName}.");
+    return IProgressTrack.RecommitOption($"Recommit after a Miss on {ResolveMoveName}.");
   }
   public virtual SelectMenuBuilder MakeMenu()
   {
-    SelectMenuBuilder menu = MenuStub(Rank, Ticks);
+    SelectMenuBuilder menu = MenuStub(this);
     if (Ticks < 40)
     {
       menu = menu.AddOption(MarkOption());
@@ -175,7 +182,7 @@ public abstract class ProgressTrack : IProgressTrack, IMoveRef
     string tickString = ITrack.TickString(addTicks);
     string message = $"{tickString} of progress marked. Progress is now {ITrack.TickString(Ticks)}.";
     return new EmbedBuilder()
-      .WithAuthor(TrackCategory + ": " + Title)
+      .WithAuthor(TrackDescription + ": " + Title)
       .WithTitle(alertTitle + " " + emojiString)
       .WithDescription(message)
       ;

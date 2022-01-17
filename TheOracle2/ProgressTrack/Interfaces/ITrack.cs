@@ -56,7 +56,8 @@ public interface ITrack
   /// </summary>
   public static int ParseTrack(EmbedField embedField)
   {
-    string scoreString = Regex.Match(embedField.Name, ProgressFieldPattern).ToString();
+    // string scoreString = Regex.Match(embedField.Name, ProgressFieldPattern).Value;
+    string scoreString = embedField.Name.Split('[')[1].Split('/')[0];
 
     if (!int.TryParse(scoreString, out int score))
     {

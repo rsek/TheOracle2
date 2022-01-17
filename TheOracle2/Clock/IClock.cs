@@ -1,3 +1,4 @@
+using TheOracle2.UserContent;
 namespace TheOracle2.GameObjects;
 public interface IClock : ILogWidget
 {
@@ -166,13 +167,13 @@ public interface IClock : ILogWidget
       }
     }
   };
-  public static IClock FromEmbed(Embed embed)
+  public static IClock FromEmbed(EFContext dbContext, Embed embed, int? ticks = 0)
   {
     return embed.Author.ToString() switch
     {
       "Campaign Clock" => new CampaignClock(embed),
       "Tension Clock" => new TensionClock(embed),
-      "Scene Challenge" => new SceneChallenge(embed),
+      "Scene Challenge" => new SceneChallenge(dbContext, embed),
       _ => throw new ArgumentOutOfRangeException(nameof(embed), "Embed must be a 'Campaign Clock', 'Tension Clock', or 'Scene Challenge'"),
     };
   }

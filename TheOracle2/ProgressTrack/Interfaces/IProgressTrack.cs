@@ -1,4 +1,5 @@
 using TheOracle2;
+using TheOracle2.UserContent;
 namespace TheOracle2.GameObjects;
 
 /// <summary>
@@ -33,20 +34,20 @@ public interface IProgressTrack : ITrack, ILogWidget, IRanked
   /// Marks one unit of progress on the track, and returns an alert embed (titled with the default progress marking move of the track) to notify the player of the change.
   /// </summary>
   public EmbedBuilder Mark();
-  public static ProgressTrack FromEmbed(Embed embed)
+  public static ProgressTrack FromEmbed(EFContext dbContext, Embed embed)
   {
     switch (embed.Author.ToString())
     {
       case "Progress Track":
-        return new GenericTrack(embed);
+        return new GenericTrack(dbContext, embed);
       case "Scene Challenge":
-        return new SceneChallenge(embed);
+        return new SceneChallenge(dbContext, embed);
       case "Vow Progress Track":
-        return new VowTrack(embed);
+        return new VowTrack(dbContext, embed);
       case "Combat Objective Progress Track":
-        return new CombatTrack(embed);
+        return new CombatTrack(dbContext, embed);
       case "Expedition Progress Track":
-        return new ExpeditionTrack(embed);
+        return new ExpeditionTrack(dbContext, embed);
       default:
         break;
     }
@@ -55,20 +56,20 @@ public interface IProgressTrack : ITrack, ILogWidget, IRanked
   /// <summary>
   /// Builds embed without parsing the progress bar string. Might be faster than an embed alone if you can parse the ticks from a CustomId.
   /// </summary>
-  public static ProgressTrack FromEmbed(Embed embed, int ticks)
+  public static ProgressTrack FromEmbed(EFContext dbContext, Embed embed, int ticks)
   {
     switch (embed.Author.ToString())
     {
       case "Progress Track":
-        return new GenericTrack(embed, ticks);
+        return new GenericTrack(dbContext, embed, ticks);
       case "Scene Challenge":
-        return new SceneChallenge(embed, ticks);
+        return new SceneChallenge(dbContext, embed, ticks);
       case "Vow Progress Track":
-        return new VowTrack(embed, ticks);
+        return new VowTrack(dbContext, embed, ticks);
       case "Combat Objective Progress Track":
-        return new CombatTrack(embed, ticks);
+        return new CombatTrack(dbContext, embed, ticks);
       case "Expedition Progress Track":
-        return new ExpeditionTrack(embed, ticks);
+        return new ExpeditionTrack(dbContext, embed, ticks);
       default:
         break;
     }

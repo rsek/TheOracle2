@@ -19,18 +19,14 @@ public class DbComponents : InteractionModuleBase<SocketInteractionContext<Socke
   [ComponentInteraction("move-ref-menu")]
   public async Task MoveReferenceMenu(string[] values)
   {
-    string idString = values.FirstOrDefault();
-    if (!int.TryParse(idString, out int Id))
-    {
-      throw new Exception($"Unable to parse {idString} into id");
-    }
-    var db = DbContext.Moves;
-    var move = db.Find(Id);
+    string moveId = values.FirstOrDefault();
+    var move = DbContext.Moves.Find(moveId);
     var moveItems = new DiscordMoveEntity(move, true);
     await Context.Interaction.UpdateAsync(msg =>
     {
       msg.Components = msg.Components;
     });
-    await FollowupAsync(embeds: moveItems.GetEmbeds(), components: moveItems.GetComponents(), ephemeral: true).ConfigureAwait(false);
+    await FollowupAsync(
+      embeds: moveItems.GetEmbeds(), components: moveItems.GetComponents(), ephemeral: true).ConfigureAwait(false);
   }
 }
