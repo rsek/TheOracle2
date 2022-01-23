@@ -25,7 +25,7 @@ public class RollCommand : InteractionModuleBase
         await EfContext.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    [SlashCommand("action-pc", "Make an action roll (p. 28) for a player character.")]
+    [SlashCommand("action-pc", "Make an Ironsworn action roll (p. 28) for a player character.")]
     public async Task RollPcAction(
         [Summary(description: "The stat value to use for the roll")] RollableStats stat,
         [Summary(description: "Any adds to the roll")][MinValue(0)] int adds,
@@ -127,7 +127,7 @@ public class RollCommand : InteractionModuleBase
         var roll = new ActionRoll(Random, stat, adds, momentum, description, actionDie, challengeDie1, challengeDie2);
         await RespondAsync(embed: roll.ToEmbed().Build()).ConfigureAwait(false);
     }
-    [SlashCommand("progress", "Roll with a set progress score (p. 39). For an interactive progress tracker, use /progress-track.")]
+    [SlashCommand("progress", "Roll with a set progress score (p. 39). For an interactive progress tracker, use /progress-track")]
     public async Task RollProgress(
         [Summary(description: "The progress score.")] int progressScore,
         [Summary(description: "A preset value for the first Challenge Die to use instead of rolling.")][MinValue(1)][MaxValue(10)] int? challengeDie1 = null,
