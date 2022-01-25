@@ -1,7 +1,8 @@
-using Discord.WebSocket;
-using TheOracle2.UserContent;
-using Discord.Interactions;
 using System.Text.RegularExpressions;
+using Discord.Interactions;
+using Discord.WebSocket;
+using TheOracle2.DataClassesNext;
+using TheOracle2.UserContent;
 namespace TheOracle2.GameObjects;
 
 /// <summary>
@@ -9,38 +10,37 @@ namespace TheOracle2.GameObjects;
 /// </summary>
 public interface IMoveRef : IWidget
 {
-  public EFContext DbContext { get; }
-  public string[] MoveReferences { get; }
+    public EFContext DbContext { get; }
+    public string[] MoveReferences { get; }
+    // public DataClassesNext.Move[] MoveRefs { get; }
+    public SelectMenuBuilder MoveRefMenu();
 
-  // public DataClasses.Move[] MoveRefs { get; }
-  public SelectMenuBuilder MoveRefMenu();
-
-  /// <summary>
-  /// Generates menu options representing move references for an IMoveRef.
-  /// </summary>
-  /// <param name="moveRefParent">The IMoveRef to build a list for.</param>
-  /// <param name="prefix">A prefix to add to the Value of the menu options</param>
-  public static List<SelectMenuOptionBuilder> MenuOptions(IMoveRef moveRefParent, string prefix = "")
-  {
-    List<SelectMenuOptionBuilder> options = new();
-    foreach (string moveName in moveRefParent.MoveReferences)
+    /// <summary>
+    /// Generates menu options representing move references for an IMoveRef.
+    /// </summary>
+    /// <param name="moveRefParent">The IMoveRef to build a list for.</param>
+    /// <param name="prefix">A prefix to add to the Value of the menu options</param>
+    public static List<SelectMenuOptionBuilder> MenuOptions(IMoveRef moveRefParent, string prefix = "")
     {
-      DataClasses.Move moveData = moveRefParent.DbContext.Moves.Find(moveName);
-      DiscordMoveEntity moveEntity = new(moveData);
-      options.Add(moveEntity.ReferenceOption());
+        List<SelectMenuOptionBuilder> options = new();
+        foreach (string moveName in moveRefParent.MoveReferences)
+        {
+            DataClassesNext.Move moveData = moveRefParent.DbContext.Moves.Find(moveName);
+            DiscordMoveEntity moveEntity = new(moveData);
+            options.Add(moveEntity.ReferenceOption());
+        }
+        return options;
     }
-    return options;
-  }
-  /// <summary>
-  /// Builds a menu of move references from an IMoveRef.
-  /// </summary>
-  public static SelectMenuBuilder MenuBase(IMoveRef moveRefParent)
-  {
-    SelectMenuBuilder menu =
-     new SelectMenuBuilder()
-       .WithPlaceholder("Reference moves...")
-       .WithCustomId("move-ref-menu")
-       .WithOptions(MenuOptions(moveRefParent));
-    return menu;
-  }
+    /// <summary>
+    /// Builds a menu of move references from an IMoveRef.
+    /// </summary>
+    public static SelectMenuBuilder MenuBase(IMoveRef moveRefParent)
+    {
+        SelectMenuBuilder menu =
+         new SelectMenuBuilder()
+           .WithPlaceholder("Reference moves...")
+           .WithCustomId("move-ref-menu")
+           .WithOptions(MenuOptions(moveRefParent));
+        return menu;
+    }
 }

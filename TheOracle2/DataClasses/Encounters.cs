@@ -1,6 +1,4 @@
-using OracleData;
-
-namespace TheOracle2.DataClasses;
+namespace TheOracle2.DataClassesNext;
 
 public partial class Encounter
 {

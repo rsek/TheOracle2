@@ -1,67 +1,67 @@
-﻿using TheOracle2.ActionRoller;
+﻿// using TheOracle2.IronswornRoller;
 
-namespace TheOracle2.Tests;
+// namespace TheOracle2.Tests;
 
-[TestClass()]
-public class OracleRollerServiceTests
-{
-    [TestMethod()]
-    public async Task RollTest()
-    {
-        var services = TestServices.GetServices();
-        var context = services.GetRequiredService<EFContext>();
-        //await context.RecreateDB();
+// [TestClass()]
+// public class OracleRollerServiceTests
+// {
+//     [TestMethod()]
+//     public async Task RollTest()
+//     {
+//         var services = TestServices.GetServices();
+//         var context = services.GetRequiredService<EFContext>();
+//         //await context.RecreateDB();
 
-        var oracle = context.Oracles.FirstOrDefault(o => o.Name == "Planetary Class");
-        
-        var result = new OracleRoller(new Random(1), context, oracle)
-            .Build();
+//         var oracle = context.Oracles.FirstOrDefault(o => o.Name == "Planetary Class");
 
-        //Assert.IsNotNull(result.ChildResults.FirstOrDefault()?.Result.Oracle?.OracleInfo);
-        Assert.AreEqual(1, result.ChildResults.Count);
-        Assert.AreEqual(4, result.FollowUpTables.Count);
-    }
+//         var result = new OracleRoller(new Random(1), context, oracle)
+//             .Build();
 
-    [TestMethod()]
-    public async Task RollerFactoryTest()
-    {
-        var services = TestServices.GetServices();
-        var context = services.GetRequiredService<EFContext>();
-        var random = services.GetRequiredService<Random>();
-        var RollerFactory = new TableRollerFactory(context, random);
+//         //Assert.IsNotNull(result.ChildResults.FirstOrDefault()?.Result.Oracle?.OracleInfo);
+//         Assert.AreEqual(1, result.ChildResults.Count);
+//         Assert.AreEqual(4, result.FollowUpTables.Count);
+//     }
 
-        var subCat = context.OracleInfo.SelectMany(o => o.Subcategories.Where(s => s.Name == "Desert World")).ToList();
+//     [TestMethod()]
+//     public async Task RollerFactoryTest()
+//     {
+//         var services = TestServices.GetServices();
+//         var context = services.GetRequiredService<EFContext>();
+//         var random = services.GetRequiredService<Random>();
+//         var RollerFactory = new TableRollerFactory(context, random);
 
-        foreach (var cat in subCat)
-        {
-            Console.WriteLine(cat.Name);
-        }
+//         var subCat = context.OracleInfo.SelectMany(o => o.Subcategories.Where(s => s.Name == "Desert World")).ToList();
 
-        var rollResult = RollerFactory.GetRoller("tables:17").Build();
-        var rollResult2 = RollerFactory.GetRoller("subcat:16").Build();
-        var rollResult3 = RollerFactory.GetRoller("16").Build();
+//         foreach (var cat in subCat)
+//         {
+//             Console.WriteLine(cat.Name);
+//         }
 
-        Assert.AreEqual("Planetside Peril - Lifeless", rollResult?.TableResult.Name);
-        Assert.AreEqual("Desert World", rollResult2?.TableResult.Name);
-        Assert.AreEqual("Theme", rollResult3?.TableResult.Name);
-    }
+//         var rollResult = RollerFactory.GetRoller("tables:17").Build();
+//         var rollResult2 = RollerFactory.GetRoller("subcat:16").Build();
+//         var rollResult3 = RollerFactory.GetRoller("16").Build();
 
-    [TestMethod()]
-    public async Task RollerEmbedTest()
-    {
-        var services = TestServices.GetServices();
-        var context = services.GetRequiredService<EFContext>();
+//         Assert.AreEqual("Planetside Peril - Lifeless", rollResult?.TableResult.Name);
+//         Assert.AreEqual("Desert World", rollResult2?.TableResult.Name);
+//         Assert.AreEqual("Theme", rollResult3?.TableResult.Name);
+//     }
 
-        var oracle = context.Oracles.FirstOrDefault(o => o.Name == "Planetary Class");
-        var roller = new OracleRoller(new Random(1), context, oracle);
+//     [TestMethod()]
+//     public async Task RollerEmbedTest()
+//     {
+//         var services = TestServices.GetServices();
+//         var context = services.GetRequiredService<EFContext>();
 
-        var result = roller.Build();
+//         var oracle = context.Oracles.FirstOrDefault(o => o.Name == "Planetary Class");
+//         var roller = new OracleRoller(new Random(1), context, oracle);
 
-        var embed = new DiscordOracleBuilder(result).Build().EmbedBuilder;
+//         var result = roller.Build();
 
-        foreach (var field in embed.Fields)
-        {
-            Assert.AreEqual(1, embed.Fields.Count(f => f.Name == field.Name));
-        }
-    }
-}
+//         var embed = new DiscordOracleBuilder(result).Build().EmbedBuilder;
+
+//         foreach (var field in embed.Fields)
+//         {
+//             Assert.AreEqual(1, embed.Fields.Count(f => f.Name == field.Name));
+//         }
+//     }
+// }

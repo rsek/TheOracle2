@@ -1,4 +1,4 @@
-﻿using TheOracle2.DataClasses;
+﻿using TheOracle2.DataClassesNext;
 
 namespace TheOracle2;
 

@@ -1,12 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
-//using NJsonSchema.CodeGeneration.CSharp;
-using OracleData;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TheOracle2.DataClasses;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+//using NJsonSchema.CodeGeneration.CSharp;
+using TheOracle2.DataClassesNext;
 
 namespace TheOracle2.UserContent.Tests
 {
@@ -33,7 +32,7 @@ namespace TheOracle2.UserContent.Tests
         [DataRow(typeof(EncountersRoot), "encounter*.json")]
         [DataRow(typeof(List<GlossaryRoot>), "glossary*.json")]
         [DataRow(typeof(MovesInfo), "move*.json")]
-        [DataRow(typeof(List<OracleInfo>), "oracle*.json")]
+        [DataRow(typeof(List<OracleCategory>), "oracle*.json")]
         [DataRow(typeof(TruthRoot), "*truth*.json")]
         public void LoadAndGenerateTest(Type T, string searchOption)
         {
@@ -60,7 +59,7 @@ namespace TheOracle2.UserContent.Tests
                     case MovesInfo m:
                         Console.WriteLine($"there are {m.Moves.Count} moves in {file.Name}");
                         break;
-                    case List<OracleInfo> o:
+                    case List<OracleCategory> o:
                         Console.WriteLine($"there are {o.Sum(i => i.Oracles.Count)} in {file.Name}");
                         break;
                     default:
