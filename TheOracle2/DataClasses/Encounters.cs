@@ -1,4 +1,4 @@
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 public partial class Encounter
 {

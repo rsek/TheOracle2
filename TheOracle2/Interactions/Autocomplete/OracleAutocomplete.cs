@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 using TheOracle2.UserContent;
 
 namespace TheOracle2.Commands;
@@ -21,12 +21,17 @@ public class OracleAutocomplete : AutocompleteHandler
                 "Core / Descriptor",
                 "Core / Focus",
                 "Move / Pay the Price",
-                "Space Sighting"
+                "Space / Space Sighting / Terminus",
+                "Space / Space Sighting / Outlands",
+                "Space / Space Sighting / Expanse"
             };
 
             if (dict.TryGetValue("initialOracles", out Task<AutocompletionResult> result)) return result;
 
-            var list = Db.Oracles.Where(oracle => defaultKeys.Contains(oracle.Id) || defaultKeys.Contains(oracle.Name)).AsEnumerable()
+            var list = Db.Oracles.Where(oracle =>
+            oracle.Table != null && oracle.Table.Any() &&
+            (defaultKeys.Contains(oracle.Id) || defaultKeys.Contains(oracle.Name))
+            ).AsEnumerable()
                 .Select(oracle => new AutocompleteResult(oracle.Id, oracle.Id))
                 .OrderBy(x => //Todo this is really lazy ordering, but so is the rest of this getter's code.
                     x.Name == "Pay the Price" ? 1 :

@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 public class MultipleRolls
 {
 

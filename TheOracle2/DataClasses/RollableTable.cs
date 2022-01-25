@@ -1,5 +1,5 @@
 using System.Linq;
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 
 public class RollableTable : List<RollableTableRow>

@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 //using NJsonSchema.CodeGeneration.CSharp;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 
 namespace TheOracle2.UserContent.Tests
 {

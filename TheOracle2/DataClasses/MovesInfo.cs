@@ -1,6 +1,6 @@
 ﻿using TheOracle2.UserContent;
 
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 public class Move
 {

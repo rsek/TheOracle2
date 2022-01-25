@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 public class Special
 {

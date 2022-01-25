@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 public class AddTemplate
 {
     [JsonProperty("Object type")]

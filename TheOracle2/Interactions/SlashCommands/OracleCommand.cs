@@ -1,7 +1,8 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
 using TheOracle2.Commands;
-using TheOracle2.IronswornRoller;
+using TheOracle2.DataClasses;
+using TheOracle2.OracleRoller;
 using TheOracle2.UserContent;
 
 namespace TheOracle2;
@@ -18,19 +19,54 @@ public class OracleCommand : InteractionModuleBase
     public Random Random { get; }
 
     [SlashCommand("oracle", "Roll on an oracle table. To ask a yes/no question, use /ask.")]
-    public async Task RollOracle([Autocomplete(typeof(OracleAutocomplete))] string oracle, bool ephemeral = true)
+    public async Task RollOracle(
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle,
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle2 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle3 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle4 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle5 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle6 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle7 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle8 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle9 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle10 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle11 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle12 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle13 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle14 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle15 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle16 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle17 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle18 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle19 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle20 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle21 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle22 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle23 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle24 = "",
+        [Autocomplete(typeof(OracleAutocomplete))] string oracle25 = ""
+        )
     {
-        // var table = await DbContext.Tables.FindAsync(oracle);
-        var o = DbContext.Oracles.Find(oracle);
-        var table = o.Table;
-        if (table != null)
-        {
-            var result = table.Roll(this.Random);
-            await RespondAsync(text: result.ToString(), ephemeral: ephemeral).ConfigureAwait(false);
-        }
-        // var entityItem = new DiscordOracleEntity(oracle, DbContext, Random);
+        await DeferAsync();
+        var oracleStrings = new List<string>() {
+            oracle, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7, oracle8, oracle9, oracle10, oracle11, oracle12, oracle13, oracle14, oracle15, oracle16, oracle17, oracle18, oracle19, oracle20, oracle21, oracle22, oracle23, oracle24, oracle25,
+        }.Where(item => !string.IsNullOrEmpty(item));
 
-        // await RespondAsync(embeds: entityItem.GetEmbeds(), ephemeral: entityItem.IsEphemeral, components: entityItem.GetComponents());
+        // TODO:
+        var oracleData = await Task.FromResult<IQueryable<Oracle>>(DbContext.Oracles.Where(item => oracleStrings.Contains(item.Id)));
+        // var oracleData = await DbContext.Oracles.FindAsync(oracle);
+        var oracleList = new List<Oracle>();
+        foreach (var oracleIds in oracleStrings)
+        {
+            oracleList.Add(oracleData.FirstOrDefault(item => item.Id == oracleIds));
+        }
+
+        var results = new OracleRolls(DbContext, Random, oracleList);
+        var embed = results.ToEmbed();
+
+        await this.FollowupAsync(
+                embed: embed.Build()
+            ).ConfigureAwait(false);
     }
 }
 

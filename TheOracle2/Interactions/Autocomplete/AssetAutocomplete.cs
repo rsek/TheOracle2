@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 using TheOracle2.UserContent;
 
 namespace TheOracle2.Commands;

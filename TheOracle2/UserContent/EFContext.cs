@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 using TheOracle2.GameObjects;
 
 namespace TheOracle2.UserContent;

@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 public class Oracle
 {
@@ -31,10 +31,10 @@ public class Oracle
         EmbedBuilder embed = new EmbedBuilder()
             // .WithAuthor(PathTo)
             .WithTitle(DisplayName ?? Name);
-        if (Source != null)
-        {
-            embed.WithFooter(Source.ToString());
-        }
+        // if (Source != null)
+        // {
+        //     embed.WithFooter(Source.ToString());
+        // }
         if (Table != null)
         {
             embed.WithDescription(Table.ToString());

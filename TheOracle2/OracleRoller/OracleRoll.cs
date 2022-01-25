@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 using TheOracle2.GameObjects;
 using TheOracle2.UserContent;
 
@@ -15,6 +15,7 @@ public class OracleRoll : Die
         }
         DbContext = dbContext;
         Random = random;
+        Oracle = oracle;
         // TODO: initialize multiple roll/other oracle table results
 
     }
@@ -42,7 +43,7 @@ public class OracleRoll : Die
     public EFContext DbContext { get; set; }
     public Random Random { get; set; }
     public Oracle Oracle { get; set; }
-    public RollableTableRow Row => Oracle.Table.Lookup(Value);
+    public RollableTableRow Row => this.Oracle.Table.Lookup(Value);
     public EmbedFieldBuilder ToField()
     {
         return Row.ToField(Value);

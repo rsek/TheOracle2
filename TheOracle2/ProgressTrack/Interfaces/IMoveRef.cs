@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Discord.Interactions;
 using Discord.WebSocket;
-using TheOracle2.DataClassesNext;
+using TheOracle2.DataClasses;
 using TheOracle2.UserContent;
 namespace TheOracle2.GameObjects;
 
@@ -12,7 +12,7 @@ public interface IMoveRef : IWidget
 {
     public EFContext DbContext { get; }
     public string[] MoveReferences { get; }
-    // public DataClassesNext.Move[] MoveRefs { get; }
+    // public DataClasses.Move[] MoveRefs { get; }
     public SelectMenuBuilder MoveRefMenu();
 
     /// <summary>
@@ -25,7 +25,7 @@ public interface IMoveRef : IWidget
         List<SelectMenuOptionBuilder> options = new();
         foreach (string moveName in moveRefParent.MoveReferences)
         {
-            DataClassesNext.Move moveData = moveRefParent.DbContext.Moves.Find(moveName);
+            DataClasses.Move moveData = moveRefParent.DbContext.Moves.Find(moveName);
             DiscordMoveEntity moveEntity = new(moveData);
             options.Add(moveEntity.ReferenceOption());
         }

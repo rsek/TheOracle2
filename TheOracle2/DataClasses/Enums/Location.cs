@@ -1,2 +1,2 @@
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 public enum Location { Planetside, Orbital, DeepSpace }

@@ -1,4 +1,4 @@
-namespace TheOracle2.DataClassesNext;
+namespace TheOracle2.DataClasses;
 
 //Todo convert the classes in the file to records that should be
 
