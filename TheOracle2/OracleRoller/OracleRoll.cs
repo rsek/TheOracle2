@@ -44,10 +44,6 @@ public class OracleRoll : Die
     public Random Random { get; set; }
     public Oracle Oracle { get; set; }
     public RollableTableRow Row => this.Oracle.Table.Lookup(Value);
-    public EmbedFieldBuilder ToField()
-    {
-        return Row.ToField(Value);
-    }
     // <summary>For multiple roll results as with "Roll Twice" or "Action + Theme" results</summary>
     public OracleRolls Rolls { get; set; }
 

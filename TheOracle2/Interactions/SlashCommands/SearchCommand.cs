@@ -16,7 +16,7 @@ public class SearchCommand : InteractionModuleBase<SocketInteractionContext>
         switch (searchType)
         {
             case GameEntityType.Oracle:
-                entityItem = new DiscordOracleEntity(query, Db, Random);
+                entityItem = new DiscordOracleResultEntity(query, Db, Random);
                 break;
 
             case GameEntityType.Reference:

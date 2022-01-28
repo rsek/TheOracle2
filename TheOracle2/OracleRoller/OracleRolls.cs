@@ -62,13 +62,4 @@ public class OracleRolls : List<OracleRoll>
     public EFContext DbContext { get; set; }
     public Random Random { get; set; }
 
-
-    public EmbedBuilder ToEmbed()
-    {
-        var embed = new EmbedBuilder().WithFields(this.Select(oracleRoll => oracleRoll.ToField().WithIsInline(true)));
-        return embed;
-        // TODO: split over multiple embeds if it exceeds the number of fields.
-    }
-
-    // should either have a size limit of 25 to accomodate embeds, or else have some logic to account for multiple embeds
 }

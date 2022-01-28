@@ -1,6 +1,5 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
-using TheOracle2.ActionRoller;
 using TheOracle2.Commands;
 using TheOracle2.UserContent;
 
@@ -20,7 +19,7 @@ public class OracleCommand : InteractionModuleBase
     [SlashCommand("oracle", "Roll on an oracle table. To ask a yes/no question, use /ask.")]
     public async Task RollOracle([Autocomplete(typeof(OracleAutocomplete))] string oracle)
     {
-        var entityItem = new DiscordOracleEntity(oracle, DbContext, Random);
+        var entityItem = new DiscordOracleResultEntity(oracle, DbContext, Random);
 
         await RespondAsync(embeds: entityItem.GetEmbeds(), ephemeral: entityItem.IsEphemeral, components: entityItem.GetComponents());
     }

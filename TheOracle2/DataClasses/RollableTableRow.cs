@@ -7,17 +7,7 @@ public class RollableTableRow
     [JsonIgnore]
     public string ParentPath { get; set; }
     [JsonIgnore]
-    private string DisplayPath => ParentPath.Replace(" / Table", "");
-    public EmbedFieldBuilder ToField(int? rollValue = null)
-    {
-        var name = DisplayPath;
-        var value = ToResultString();
-        if (rollValue != null)
-        {
-            name += $" [{rollValue}]";
-        }
-        return new EmbedFieldBuilder().WithName(name).WithValue(value);
-    }
+    public string DisplayPath => ParentPath.Replace(" / Table", "");
     public bool RollIsInRange(int roll)
     {
         if (roll >= Floor && roll <= Ceiling) { return true; }
@@ -25,27 +15,16 @@ public class RollableTableRow
     }
     public override string ToString()
     {
-        return $"`{ToRangeString().PadLeft(7)}` {ToResultString()}";
-    }
-    public string ToResultString()
-    {
         if (Summary != null)
         {
             return $"{Result} ({Summary})";
         }
         return Result;
     }
-
-    public string ToRangeString()
-    {
-        if (Floor == Ceiling) { return Floor.ToString(); }
-        return $"{Floor}-{Ceiling}";
-    }
     public int Floor { get; set; }
     public int Ceiling { get; set; }
-
+    // public int Weight => (Ceiling - Floor) + 1;
     public string Result { get; set; }
-
     public string Summary { get; set; }
 
     [JsonProperty("Game objects")]
