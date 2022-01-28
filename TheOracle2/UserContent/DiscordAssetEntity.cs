@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -94,9 +94,11 @@ namespace TheOracle2.UserContent
         public Asset Asset { get; }
 
         public Embed[] GetEmbeds() => new Embed[] { builder.Build() };
+
         public MessageComponent GetComponents() => compBuilder.Build();
 
         public bool IsEphemeral { get; set; } = false;
+
         public async Task<IMessage> GetDiscordMessage(IInteractionContext context)
         {
             return null;

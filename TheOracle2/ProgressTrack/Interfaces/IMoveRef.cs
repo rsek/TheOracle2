@@ -1,8 +1,5 @@
-using System.Text.RegularExpressions;
-using Discord.Interactions;
-using Discord.WebSocket;
-using TheOracle2.DataClasses;
 using TheOracle2.UserContent;
+
 namespace TheOracle2.GameObjects;
 
 /// <summary>

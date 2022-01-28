@@ -1,4 +1,4 @@
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Discord.WebSocket;
 using TheOracle2.GameObjects;
 using TheOracle2.UserContent;
@@ -212,7 +212,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
             msg.Components = clock.MakeComponents().Build();
             msg.Embed = clock.ToEmbed().Build();
         }).ConfigureAwait(false);
-
+        // this is intentionally left insensitive to IWidget.ParseAlertStatus, because it's an oracle answer, not simply an increment alert
         await Interaction.FollowupAsync(embed: answerEmbed.Build()).ConfigureAwait(false);
     }
 
@@ -232,6 +232,7 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
             case "clock-reset":
                 await ResetClock().ConfigureAwait(false);
                 return;
+
             case "clock-advance":
                 await AdvanceClock().ConfigureAwait(false);
                 return;
@@ -252,5 +253,6 @@ public class CounterComponents : InteractionModuleBase<SocketInteractionContext<
             await ClockMenu(values).ConfigureAwait(false);
             return;
         }
+        return;
     }
 }

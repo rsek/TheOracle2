@@ -1,4 +1,4 @@
-namespace TheOracle2.GameObjects;
+﻿namespace TheOracle2.GameObjects;
 
 public abstract class Clock : IClock
 {
@@ -10,7 +10,6 @@ public abstract class Clock : IClock
         Filled = values.Item1;
         Segments = values.Item2;
         AlertOnIncrement = alerts;
-
     }
 
     protected Clock(ClockSize segments = (ClockSize)6, int filledSegments = 0, string title = "", string description = "", bool alerts = false)
@@ -54,12 +53,10 @@ public abstract class Clock : IClock
         var embed = IClock.AlertStub(this);
         if (IsFull)
         { embed.WithDescription(ClockFillMessage); }
-
         return embed;
     }
 
     public virtual string LogMessage => IsFull ? "The clock fills!" : "The clock advances!";
-
     public abstract string ClockFillMessage { get; }
 
     public virtual ComponentBuilder MakeComponents()

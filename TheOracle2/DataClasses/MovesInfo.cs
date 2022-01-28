@@ -5,7 +5,8 @@ namespace TheOracle2.DataClasses;
 public class Move
 {
     public string Id { get; set; }
-    // [JsonIgnore]
+
+    [JsonIgnore]
     // public virtual IList<OracleGuild> OracleGuilds { get; set; }
 
     public string Category { get; set; }
@@ -17,6 +18,7 @@ public class Move
 
     [JsonProperty("Trigger text")]
     public string TriggerText { get; set; }
+
     public string Text { get; set; }
     public virtual List<MoveTrigger> Triggers { get; set; }
 }

@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
 using TheOracle2.DataClasses;
-using TheOracle2.IronswornRoller;
 
 namespace TheOracle2.UserContent
 {
@@ -28,6 +26,7 @@ namespace TheOracle2.UserContent
             option.WithDescription(triggerString);
             return option;
         }
+
         // commented out until there's a sensible way to implement ephemeral-reveal. probably inessential anyways.
         public MessageComponent GetComponents()
         {
@@ -89,5 +88,4 @@ namespace TheOracle2.UserContent
       {"Ask the Oracle", new Emoji("🔮")}
   };
     }
-
 }

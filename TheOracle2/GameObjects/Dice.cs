@@ -1,5 +1,4 @@
-using TheOracle2.IronswornRoller;
-namespace TheOracle2.GameObjects;
+﻿namespace TheOracle2.GameObjects;
 
 /// <summary>
 /// Represents a group of dice.
@@ -20,6 +19,7 @@ public class Dice : List<Die>
             Add(new Die(random, sides));
         }
     }
+
     /// <summary>
     /// Create a group of dice with the same number of size using preset values.
     /// </summary>
@@ -32,11 +32,13 @@ public class Dice : List<Die>
         this.AddRange(
           values.Select(value => new Die(random, sides, value)));
     }
+
     /// <summary>
     /// Group multiple Die objects into a Dice list.
     /// </summary>
     /// <param name="dice">An enumerable of Die objects.</param>
     public Dice(IEnumerable<Die> dice) : base(dice) { }
+
     /// <summary>
     /// Group multiple Die objects into a Dice list.
     /// </summary>
@@ -47,11 +49,14 @@ public class Dice : List<Die>
     public const string DieSeparator = ", ";
 
     /// <summary>A string representation of the dice values for use in text output.</summary>
-    public override string ToString() { return ToString(DieSeparator); }
+    public override string ToString()
+    { return ToString(DieSeparator); }
+
     public string ToString(string joiner)
     {
         return string.Join(joiner, this);
     }
+
     /// <summary>
     /// Render the dice as an embed field for display.
     /// </summary>
@@ -61,6 +66,7 @@ public class Dice : List<Die>
           .WithName(fieldTitle)
           .WithValue(ToString());
     }
+
     /// <summary>
     /// Gets the highest value of the two challenge dice.
     /// </summary>

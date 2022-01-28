@@ -1,2 +1,4 @@
-namespace TheOracle2.DataClasses;
-public enum StarforgedRegion { Terminus, Outlands, Expanse }
+namespace TheOracle2.DataClassesNext;
+
+public enum StarforgedRegion
+{ Terminus, Outlands, Expanse }
