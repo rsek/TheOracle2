@@ -15,6 +15,7 @@ public class RollCommandGroup : InteractionModuleBase
         Random = random;
         EfContext = efContext;
     }
+
     public Random Random { get; }
     public EFContext EfContext { get; }
     public GuildPlayer GuildPlayer => GuildPlayer.GetAndAddIfMissing(EfContext, Context);
@@ -130,32 +131,7 @@ public class RollCommandGroup : InteractionModuleBase
         var roll = new ProgressRoll(Random, progressScore, description, challengeDie1, challengeDie2);
         await RespondAsync(embed: roll.ToEmbed().Build()).ConfigureAwait(false);
     }
-
-    [SlashCommand("action", "Make an action roll (p. 28) by setting a stat value.")]
-    public async Task RollAction(
-        [Summary(description: "The stat value to use for the roll")] int stat,
-        [Summary(description: "Any adds to the roll")][MinValue(0)] int adds,
-        [Summary(description: "The player character's momentum.")][MinValue(-6)][MaxValue(10)] int momentum,
-        [Summary(description: "Any notes, fiction, or other text you'd like to include with the roll")] string description = "",
-        [Summary(description: "A preset value for the Action Die (d6) to use instead of rolling.")][MinValue(1)][MaxValue(6)] int? actionDie = null,
-        [Summary(description: "A preset value for the first Challenge Die (d10) to use instead of rolling.")][MinValue(1)][MaxValue(10)] int? challengeDie1 = null,
-        [Summary(description: "A preset value for the second Challenge Die (d10) to use instead of rolling.")][MinValue(1)][MaxValue(10)] int? challengeDie2 = null)
-    {
-        var roll = new ActionRoll(Random, stat, adds, momentum, description, actionDie, challengeDie1, challengeDie2);
-        await RespondAsync(embed: roll.ToEmbed().Build()).ConfigureAwait(false);
-    }
-    [SlashCommand("progress", "Roll with a set progress score (p. 39). For an interactive progress tracker, use /progress-track")]
-    public async Task RollProgress(
-        [Summary(description: "The progress score.")] int progressScore,
-        [Summary(description: "A preset value for the first Challenge Die to use instead of rolling.")][MinValue(1)][MaxValue(10)] int? challengeDie1 = null,
-        [Summary(description: "A preset value for the second Challenge Die to use instead of rolling")][MinValue(1)][MaxValue(10)] int? challengeDie2 = null,
-        [Summary(description: "Notes, fiction, or other text to include with the roll.")] string description = "")
-    {
-        var roll = new ProgressRoll(Random, progressScore, description, challengeDie1, challengeDie2);
-        await RespondAsync(embed: roll.ToEmbed().Build()).ConfigureAwait(false);
-    }
 }
-
 
 public class PCRollComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
