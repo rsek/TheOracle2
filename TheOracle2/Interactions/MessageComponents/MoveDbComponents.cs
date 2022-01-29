@@ -5,7 +5,7 @@ using TheOracle2.UserContent;
 namespace TheOracle2;
 
 /// <summary>
-/// Components that access the game DB, used by multiple slash commands.
+/// Components that access Move data, used by multiple commands.
 /// </summary>
 
 public class DbComponents : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>

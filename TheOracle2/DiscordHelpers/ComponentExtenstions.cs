@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace TheOracle2;
+namespace TheOracle2.DiscordHelpers;
 
 public static class ContextExtensions
 {
@@ -153,24 +153,24 @@ public static class ComponentExtenstions
         return row;
     }
 
-    public static ActionRowComponent GetRowContainingId(this IEnumerable<ActionRowComponent> components, string id)
+    public static int GetRowIndexWithId(this IEnumerable<ActionRowComponent> components, string id)
     {
-        ActionRowComponent row = components.FirstOrDefault(row => row.Components.Any(c => c.CustomId == id));
-        return row;
+        int rowIndex = components.ToList().FindIndex(row => row.Components.Any(c => c.CustomId == id));
+        return rowIndex;
     }
 
     public static IMessageComponent GetComponentById(this IEnumerable<ActionRowComponent> components, string id)
     {
-        ActionRowComponent row = GetRowContainingId(components, id);
-        IMessageComponent component = row.Components.FirstOrDefault(item => item.CustomId == id);
+        var rowIndex = GetRowIndexWithId(components, id);
+        ActionRowComponent row = components.ToList()[rowIndex];
+        int componentIndex = row.Components.ToList().FindIndex(item => item.CustomId == id);
+        IMessageComponent component = row.Components.ToList()[componentIndex];
         return component;
     }
 
     public static IMessageComponent GetComponentById(this ComponentBuilder builder, string id)
     {
-        ActionRowBuilder row = GetRowContainingId(builder, id);
-        IMessageComponent component = row.Components.Find(c => c.CustomId == id);
-        return component;
+        return GetComponentById(builder.Build().Components, id);
     }
 
     public static ComponentBuilder RemoveComponentById(this ComponentBuilder builder, string id)
@@ -188,15 +188,18 @@ public static class ComponentExtenstions
         return builder;
     }
 
-    public static ComponentBuilder ReplaceComponentById(this ComponentBuilder builder, string id, IMessageComponent replacement)
+    public static ComponentBuilder ReplaceComponentById(this ComponentBuilder builder, string customId, IMessageComponent replacement)
     {
-        var rows = builder.ActionRows.Where(r => r.Components.Any(c => c.CustomId == id));
-        foreach (var row in rows)
+        var rowIndex = builder.ActionRows.FindIndex(r => r.Components.Any(c => c.CustomId == customId));
+        if (rowIndex == -1)
         {
-            int index = row.Components.FindIndex(c => c.CustomId == id);
-            if (index != -1) row.Components[index] = replacement;
+            throw new ArgumentException($"Components does not contain customId {customId}");
         }
-
+        int componentIndex = builder.ActionRows[rowIndex].Components.FindIndex(c => c.CustomId == customId);
+        if (componentIndex != -1)
+        {
+            builder.ActionRows[rowIndex].Components[componentIndex] = replacement;
+        }
         return builder;
     }
 

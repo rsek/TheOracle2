@@ -15,13 +15,11 @@ public class EFContext : DbContext
         //Database.EnsureCreated();
     }
 
-    // public DbSet<OracleGuild> OracleGuilds { get; set; }
+    public DbSet<OracleGuild> OracleGuilds { get; set; }
     public DbSet<GuildPlayer> GuildPlayers { get; set; }
     public DbSet<Asset> Assets { get; set; }
     public DbSet<Move> Moves { get; set; }
-    // public DbSet<OracleInfo> OracleInfo { get; set; }
-
-    public DbSet<RollableTable> Tables { get; set; }
+    // public DbSet<RollableTable> Tables { get; set; }
     public DbSet<Oracle> Oracles { get; set; }
     public DbSet<OracleCategory> OracleCategories { get; set; }
     public DbSet<Ability> AssetAbilities { get; set; }
@@ -77,7 +75,8 @@ public class EFContext : DbContext
 
     private async Task CrawlOracles(OracleCategory oracleCat)
     {
-        oracleCat.Id = oracleCat.Path + " /";
+        // oracleCat.Id = oracleCat.Path + " /";
+        oracleCat.Id = oracleCat.Path;
 
         if (oracleCat.Categories != null)
         {
@@ -88,6 +87,10 @@ public class EFContext : DbContext
         }
         if (oracleCat.Oracles != null)
         {
+            if (oracleCat.Name == "Move")
+            {
+                oracleCat.Oracles = oracleCat.Oracles.Where(item => item.Name != "Ask the Oracle").ToList();
+            }
             foreach (var oracle in oracleCat.Oracles)
             {
                 await CrawlOracles(oracle);
@@ -99,27 +102,19 @@ public class EFContext : DbContext
     private async Task CrawlOracles(Oracle oracle)
     {
         oracle.Id = oracle.Path;
+        oracle.Parent = string.Join(" / ", oracle.Path.Split(" / ").SkipLast(1));
         if (oracle.Oracles != null)
         {
             foreach (var subOracle in oracle.Oracles)
             {
+                subOracle.SubtableOf = oracle.Path;
                 await CrawlOracles(subOracle);
-            }
-        }
-        // i can't think of a place this happens, but it's probably better to have something handle it?
-        if (oracle.Categories != null)
-        {
-            foreach (var subcategory in oracle.Categories)
-            {
-                await CrawlOracles(subcategory);
             }
         }
         if (oracle.Table != null && oracle.Table.Any())
         {
             await CrawlOracles(oracle.Table, oracle.Id);
-            // Tables.Add(oracle.Table);
         }
-
         Oracles.Add(oracle);
         await SaveChangesAsync();
     }
@@ -135,7 +130,7 @@ public class EFContext : DbContext
     }
     private async Task CrawlOracles(RollableTableRow row, string parentPath)
     {
-        row.ParentPath = parentPath;
+        row.Parent = parentPath;
         if (row.Table != null)
         {
             var rowPathString = parentPath + $" / {row.Result}";
@@ -182,7 +177,7 @@ public class EFContext : DbContext
         modelBuilder.Entity<Ability>().Property(a => a.Input).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
 
         // for table rows
-        modelBuilder.Entity<RollableTableRow>().HasKey(row => new { row.Floor, row.Ceiling, row.ParentPath });
+        modelBuilder.Entity<RollableTableRow>().HasKey(row => new { row.Floor, row.Ceiling, row.Parent });
         // could set a List<int> to every integer in that range, lol
 
 

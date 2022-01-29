@@ -2,6 +2,7 @@
 using Discord.Net;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
+using TheOracle2.DiscordHelpers;
 using TheOracle2.GameObjects;
 
 namespace TheOracle2;

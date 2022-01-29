@@ -6,6 +6,12 @@ public class Oracle
 {
     [JsonProperty("_path")]
     public string Path { get; set; }
+
+    [JsonIgnore]
+    public string Parent { get; set; }
+
+    [JsonIgnore]
+    public string SubtableOf { get; set; }
     public string Id { get; set; }
     public string Name { get; set; }
 
@@ -20,7 +26,7 @@ public class Oracle
 
     public virtual OracleUsage Usage { get; set; }
 
-    public virtual IList<OracleCategory> Categories { get; set; }
+    // public virtual IList<OracleCategory> Categories { get; set; }
 
     public virtual IList<Oracle> Oracles { get; set; }
     public virtual RollableTable Table { get; set; }

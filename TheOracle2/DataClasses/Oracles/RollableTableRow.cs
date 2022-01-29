@@ -5,9 +5,9 @@ namespace TheOracle2.DataClasses;
 public class RollableTableRow
 {
     [JsonIgnore]
-    public string ParentPath { get; set; }
+    public string Parent { get; set; }
     [JsonIgnore]
-    public string DisplayPath => ParentPath.Replace(" / Table", "");
+    public string DisplayPath => Parent.Replace(" / Table", "");
     public bool RollIsInRange(int roll)
     {
         if (roll >= Floor && roll <= Ceiling) { return true; }

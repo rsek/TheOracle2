@@ -1,4 +1,6 @@
-﻿namespace TheOracle2.GameObjects;
+﻿using TheOracle2.DiscordHelpers;
+
+namespace TheOracle2.GameObjects;
 
 /// <summary>
 /// Interface for game widgets that can increment/decrement and might want to report such events to a log or embed.

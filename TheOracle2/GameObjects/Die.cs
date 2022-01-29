@@ -16,7 +16,7 @@ public class Die : IComparable<int>, IComparable<Die>
         if (sides < 2) { throw new ArgumentOutOfRangeException(nameof(sides), "Die must have at least 2 sides."); }
         if (value != null && (value > sides || value < 1)) { throw new ArgumentOutOfRangeException(nameof(value), "Value must be null, or a positive integer less than the number of sides on the die."); }
 
-        this.random = random;
+        Random = random;
         Sides = sides;
         Value = value ?? Roll();
     }
@@ -31,7 +31,7 @@ public class Die : IComparable<int>, IComparable<Die>
         return this.Value.CompareTo(other.Value);
     }
 
-    private readonly Random random;
+    private readonly Random Random;
 
     public static implicit operator int(Die die)
     {
@@ -48,7 +48,7 @@ public class Die : IComparable<int>, IComparable<Die>
 
     private int Roll()
     {
-        return random.Next(1, Sides + 1);
+        return Random.Next(1, Sides + 1);
     }
 
     /// <summary>

@@ -4,9 +4,6 @@ using System.ComponentModel.DataAnnotations;
 namespace TheOracle2.DataClasses;
 public class MultipleRolls
 {
-
-
-
     [JsonIgnore]
     public int Id { get; set; }
 
