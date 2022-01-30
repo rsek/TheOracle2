@@ -21,28 +21,23 @@ public class OracleComponents : InteractionModuleBase<SocketInteractionContext<S
     [ComponentInteraction("oracle-add-menu")]
     public async Task OracleRollMenu(string[] values)
     {
-
         // TODO: handling for multiple embeds - currently it just defaults to the first.
 
-        // generally these should be 1 roll per action, but it can handle
+        // generally these should be 1 roll per action, but it can handle more
 
-        var oracles = values.Select(item => item.Split(",").Last()).ToList();
+        var oracleIds = values.Select(item => item.Split(",").Last()).ToList();
         var customId = Interaction.Data.CustomId;
-
-        var rollEntities = oracles.ConvertAll(oracle => new DiscordOracleRollEntity(DbContext, Random, oracle));
+        var result = new DiscordOracleResultEntity(DbContext, Random, oracleIds);
 
         ComponentBuilder oldComponents = ComponentBuilder.FromComponents(Message.Components);
         var menu = oldComponents.GetComponentById(customId) as SelectMenuComponent;
         var menuBuilder = menu.ToBuilder();
         var embeds = Message.Embeds.ToList();
         var targetEmbed = embeds[0].ToEmbedBuilder();
-        rollEntities.ForEach(rollEntity =>
+        result.ForEach(rollEntity =>
             targetEmbed
             .AddField(rollEntity.ToEmbedField()));
-        values.ToList().ForEach(value =>
-        {
-            menuBuilder = DiscordOracleEntity.DecrementOracleOption(menuBuilder, value);
-        });
+        menuBuilder = DiscordOracleTableEntity.DecrementOracleOptions(menuBuilder, oracleIds);
 
         if (menuBuilder.Options?.Count > 0)
         { oldComponents = oldComponents.ReplaceComponentById(customId, menuBuilder.Build()); }

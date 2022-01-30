@@ -18,10 +18,22 @@ public class OracleCommand : InteractionModuleBase
     public Random Random { get; }
 
     [SlashCommand("oracle", "Roll on an oracle table. To ask a yes/no question, use /ask.")]
-    public async Task RollOracle([Autocomplete(typeof(OracleAutocomplete))] string oracle)
+    public async Task RollOracle([Autocomplete(typeof(OracleAutocomplete))] string table)
     {
-        var resultEntity = new DiscordOracleResultEntity(DbContext, Random, oracle);
+        // await DeferAsync();
+        var tableData = await DbContext.OracleTables.FindAsync(table);
+        Console.WriteLine($"Received request for: {table}.");
 
-        await RespondAsync(embeds: resultEntity.GetEmbeds(), ephemeral: resultEntity.IsEphemeral, components: resultEntity.GetComponents());
+        var resultEntity = new DiscordOracleResultEntity(DbContext, Random, tableData);
+
+        var embeds = resultEntity.GetEmbeds();
+        var components = resultEntity.GetComponents();
+
+        await RespondAsync(
+        // await FollowupAsync(
+        embeds: embeds,
+        // ephemeral: resultEntity.IsEphemeral,
+        components: components
+        ).ConfigureAwait(false);
     }
 }

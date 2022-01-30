@@ -10,68 +10,81 @@ namespace TheOracle2.UserContent;
 /// <summary>
 ///
 /// </summary>
-internal class DiscordOracleEntity : IDiscordEntity
+internal class DiscordOracleTableEntity : IDiscordEntity
 {
     public EFContext DbContext { get; set; }
-    public Oracle Oracle { get; set; }
+    public OracleTable Table { get; set; }
     public Random Random { get; set; }
-    public DiscordOracleEntity(EFContext dbContext, Random random, Oracle oracle)
+    public DiscordOracleTableEntity(EFContext dbContext, Random random, OracleTable table)
     {
         DbContext = dbContext;
         Random = random;
-        Oracle = oracle;
+        Table = table;
     }
-
-    public static SelectMenuOptionBuilder ToMenuOption(Oracle oracle)
+    public static SelectMenuOptionBuilder ToMenuOption(OracleTable table)
     {
         var option = new SelectMenuOptionBuilder()
-            .WithLabel($"{oracle.Id}")
-            .WithValue(DiscordOracleEntity.ToMenuOptionValue(oracle));
+            .WithLabel($"{table.Path}")
+            .WithValue(DiscordOracleTableEntity.ToMenuOptionValue(table));
         return option;
     }
     public SelectMenuOptionBuilder ToMenuOption()
     {
         var option = new SelectMenuOptionBuilder()
-            .WithLabel($"{Oracle.Id}")
+            .WithLabel($"{Table.Path}")
             .WithValue(ToMenuOptionValue());
         return option;
     }
     public string ToMenuOptionValue()
     {
-        return ToMenuOptionValue(Oracle);
+        return ToMenuOptionValue(Table);
     }
-    public static string ToMenuOptionValue(Oracle oracle)
+    public static string ToMenuOptionValue(OracleTable table)
     {
         int remainingRolls = 1;
-        if (oracle.Usage != null)
+        if (table.Metadata.Usage != null)
         {
-            remainingRolls = oracle.Usage.Repeatable ? -1 : oracle.Usage.MaxRolls;
+            remainingRolls = table.Metadata.Usage.Repeatable ? -1 : table.Metadata.Usage.MaxRolls;
         }
-        return $"{remainingRolls},{oracle.Id}";
+        return $"{remainingRolls},{table.Path}";
     }
-    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, string value)
+    public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, IEnumerable<string> values)
     {
-        var rollsLeftString = value.Split(",")[0];
-        if (!int.TryParse(rollsLeftString, out var rollsLeft))
+        foreach (var value in values)
         {
-            throw new ArgumentException($"Couldn't parse the remaining rolls from the value: {value}");
+            menuBuilder = DecrementOracleOption(menuBuilder, value);
         }
+        return menuBuilder;
+    }
+    public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, IEnumerable<Oracle> oracles)
+    {
+        return DecrementOracleOptions(menuBuilder, oracles.Select(oracle => oracle.Path));
+    }
+
+    public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, DiscordOracleResultEntity result)
+    {
+        return DecrementOracleOptions(menuBuilder, result.Select(item => item.OracleRoll.Oracle));
+    }
+    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, Oracle oracle)
+    {
+        return DecrementOracleOption(menuBuilder, oracle.Path);
+    }
+    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, string oracleId)
+    {
+        var targetIndex = menuBuilder.Options.FindIndex(option => option.Value.StartsWith(oracleId) || option.Label == oracleId);
+        if (targetIndex == -1)
+        {
+            throw new ArgumentException($"The oracle could not be found in the selectmenu: {oracleId}");
+        }
+        var targetOption = menuBuilder.Options[targetIndex];
+        var rollsLeftString = targetOption.Value.Split(",")[0];
+        if (!int.TryParse(rollsLeftString, out var rollsLeft)) { throw new ArgumentException($"Unable to parse remaining rolls from {targetOption.Value}"); }
         if (rollsLeft <= -1)
         {
             // a value of -1 represents an oracle that can be added indefinitely - no changes are needed.
             // magic numbers aren't great, but given the restrictions of custom IDs they're the simplest way to handle this
             return menuBuilder;
         }
-        var targetOption = menuBuilder.Options.Find(option => option.Value == value || option.Label == value.Split(",")[1]);
-        if (targetOption == null)
-        {
-            throw new ArgumentException($"The provided value could not be found in the selectmenu: {value}");
-        }
-        //
-        var oracleId = value.Split(",").Last();
-        // var menuBuilder = menu.ToBuilder();
-        var targetIndex = menuBuilder.Options.FindIndex(item => item.Value == value);
-
         if (rollsLeft > 0)
         {
             // if there's at least one roll left, decrement and update the option's value
@@ -79,7 +92,6 @@ internal class DiscordOracleEntity : IDiscordEntity
             var newValue = $"{rollsLeft},{oracleId}";
             menuBuilder.Options[targetIndex] = menuBuilder.Options[targetIndex].WithValue(newValue);
         }
-
         if (rollsLeft == 0)
         {
             // no more rolls left, so remove the menu option
@@ -91,7 +103,6 @@ internal class DiscordOracleEntity : IDiscordEntity
     {
         return DecrementOracleOption(menu.ToBuilder(), value);
     }
-
     public Embed[] GetEmbeds()
     {
         return null;

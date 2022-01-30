@@ -21,8 +21,7 @@ namespace TheOracle2.UserContent.Tests
             var db = services.GetRequiredService<EFContext>();
             await db.RecreateDB();
 
-            var planetClassOracle = db.Oracles.Find(112);
-            var furnaceWorld = planetClassOracle.Table[1];
+            var planetClassOracle = db.OracleTables.Find("Planet / Furnace World / Atmosphere");
 
             Assert.IsNotNull(planetClassOracle);
         }

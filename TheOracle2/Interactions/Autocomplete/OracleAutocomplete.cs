@@ -25,23 +25,21 @@ public class OracleAutocomplete : AutocompleteHandler
                 "Space / Space Sighting / Expanse"
             };
 
-            if (dict.TryGetValue("initialOracles", out Task<AutocompletionResult> result)) return result;
-
-            var list = Db.Oracles.Where(oracle =>
-            oracle.Table != null && oracle.Table.Any() &&
-            (defaultKeys.Contains(oracle.Id) || defaultKeys.Contains(oracle.Name))
+            if (dict.TryGetValue("initialOracles", out Task<AutocompletionResult> result))
+            {
+                return result;
+            }
+            var list = Db.OracleTables.Where(table =>
+                defaultKeys.Contains(table.Path)
             ).AsEnumerable()
-                .Select(oracle => new AutocompleteResult(oracle.Id, oracle.Id))
+                .Select(table => new AutocompleteResult(table.Path, table.Path))
                 .OrderBy(x => //Todo this is really lazy ordering, but so is the rest of this getter's code.
                     x.Name == "Pay the Price" ? 1 :
                     x.Name.Contains("Space Sighting") ? 3 :
                     2)
                 .Take(SelectMenuBuilder.MaxOptionCount);
-
             result = Task.FromResult(AutocompletionResult.FromSuccess(list));
-
             dict.Add("initialOracles", result);
-
             return result;
         }
     }
@@ -61,17 +59,8 @@ public class OracleAutocomplete : AutocompleteHandler
             {
                 return emptyOraclesResult;
             }
-
-            successList = Db.Oracles.Where(oracle =>
-                Regex.IsMatch(oracle.Id, $@"\b(?i){value}")
-                &&
-                oracle.Table != null && oracle.Table.Any()
-                ).Select(oracle => new AutocompleteResult(oracle.Id, oracle.Id)).ToList();
+            successList = Db.OracleTables.Select(table => new AutocompleteResult(table.Metadata.Path, table.Metadata.Path)).ToList();
             // TODO: have it check any Aliases too
-
-            // var subcategories = Db.Subcategory.Where(x => Regex.IsMatch(x.Name, $@"\b(?i){value}"));
-            // successList.AddRange(subcategories.Select(x => new AutocompleteResult(x.Name, $"subcat:{x.Id}")));
-
             return Task.FromResult(AutocompletionResult.FromSuccess(successList.Take(SelectMenuBuilder.MaxOptionCount)));
         }
         catch (Exception ex)

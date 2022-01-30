@@ -226,7 +226,7 @@ internal class Program
         var context = _services.GetRequiredService<EFContext>();
 #if DEBUG
         Console.WriteLine($"You are debugging, do you want to recreate the database? (y/n)");
-        if (Console.ReadKey(true).Key == ConsoleKey.Y) { Console.WriteLine("Rebuilding Database..."); await context.RecreateDB().ConfigureAwait(true); }
+        if (Console.ReadKey(true).Key == ConsoleKey.Y) { Console.WriteLine("Rebuilding Database..."); context.RecreateDB(); }
 #endif
 
         if (!context.HasTables())
@@ -236,7 +236,7 @@ internal class Program
             if (Console.ReadKey(true).Key == ConsoleKey.Y)
             {
                 Console.WriteLine("Rebuilding Database...");
-                await context.RecreateDB().ConfigureAwait(true);
+                context.RecreateDB();
             }
             else
             {

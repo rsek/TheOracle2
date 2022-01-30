@@ -20,22 +20,25 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
     /// <summary>
     /// Creates a roll entity with a new OracleRoll from a single oracle.
     /// </summary>
-    public DiscordOracleRollEntity(EFContext dbContext, Random random, Oracle oracle)
+    public DiscordOracleRollEntity(EFContext dbContext, Random random, OracleTable table)
     {
         DbContext = dbContext;
-        OracleRoll = new OracleRoll(dbContext, random, oracle);
+        Random = random;
+        OracleRoll = new OracleRoll(DbContext, Random, table);
     }
     /// <summary>
     /// Creates a roll entity with a new OracleRoll from a single oracle, filtered against a blacklist of integers (rows containing them will be excluded).
     /// </summary>
-    public DiscordOracleRollEntity(EFContext dbContext, Random random, Oracle oracle, IEnumerable<int> blacklistRowsWith) : this(dbContext, random)
+    public DiscordOracleRollEntity(EFContext dbContext, Random random, OracleTable table, IEnumerable<int> blacklistRowsWith) : this(dbContext, random)
     {
-        OracleRoll = new OracleRoll(dbContext, random, oracle, blacklistRowsWith);
+        OracleRoll = new OracleRoll(DbContext, Random, table, blacklistRowsWith);
     }
-    public DiscordOracleRollEntity(OracleRoll oracleRoll)
+    /// <summary>
+    /// Creates a roll entity from an existing OracleRoll.
+    /// </summary>
+    public DiscordOracleRollEntity(OracleRoll oracleRoll) : this(oracleRoll.DbContext, oracleRoll.Random)
     {
         OracleRoll = oracleRoll;
-        DbContext = OracleRoll.DbContext;
     }
     public DiscordOracleRollEntity(EFContext dbContext, Random random, EmbedField embedField) : this(dbContext, random, embedField.Name)
     {
@@ -51,7 +54,6 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
     }
     const string OracleRollPattern = @"^(.*) \[([0-9])+(.*)\]$";
     const string IntegerPattern = "([0-9]+)";
-
     public static int GetFirstInteger(string stringWithIntegers)
     {
         string capture = Regex.Match(stringWithIntegers, IntegerPattern).Captures.FirstOrDefault()?.ToString();
@@ -66,10 +68,6 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
     {
         return IsOracleRoll(field.Name);
     }
-    private async Task<Oracle> GetOracle(string oracleId)
-    {
-        return await DbContext.Oracles.FindAsync(oracleId);
-    }
     private async Task<OracleRoll> ParseOracleRoll(string oracleRollString)
     {
         if (!IsOracleRoll(oracleRollString))
@@ -82,19 +80,19 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
             throw new ArgumentException($"Unable to parse field name as oracle roll: {oracleRollString}");
         }
         var oracleRegex = Regex.Match(oracleRollString, OracleRollPattern);
-        var oracleId = oracleRegex.Captures[0].ToString();
         var primaryRollString = oracleRegex.Captures[1].ToString();
         if (!int.TryParse(primaryRollString, out int primaryRoll))
         {
             throw new ArgumentException($"Unable to parse primary die roll from string: {oracleRollString}");
         }
+        var tableId = oracleRegex.Captures[0].ToString();
         var secondaryDieString = oracleRegex.Captures[2].ToString();
-        var oracle = await GetOracle(oracleId);
-        if (oracle == null)
+        var table = await DbContext.OracleTables.FindAsync(tableId);
+        if (table == null)
         {
-            throw new ArgumentException($"Unknown Oracle ID: {oracleId}");
+            throw new ArgumentException($"Unknown Table ID: {tableId}");
         }
-        var oracleRoll = new OracleRoll(DbContext, Random, oracle, primaryRoll);
+        var oracleRoll = new OracleRoll(DbContext, Random, table, primaryRoll);
 
         if (!string.IsNullOrEmpty(secondaryDieString))
         {
@@ -148,8 +146,6 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
                }
            });
         }
-
-
         return new Tuple<OracleResult, IEnumerable<int>>(modifiedResult, presets);
     }
     private async Task<OracleRoll> ParseOracleRoll(EmbedField field)
@@ -158,8 +154,6 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
         return await ParseOracleRoll(oracleString);
         // TODO: have it check the results against the actual strings? hmm...
     }
-
-
     /// <summary>
     /// String used to separate results that originate from a different table, e.g. "Stellar Object ⏵ A burning yellow star."
     /// </summary>
@@ -194,7 +188,7 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
             // for rolls that don't (or can't, like action+theme) allow duplicates
             string resultJoiner = NonDuplicateJoiner;
             // to same table (e.g. 'roll twice'): " > "?? ": "???
-            if (OracleRoll.Row.Table != null)
+            if (OracleRoll.Table != null)
             {
                 resultSeparator = SameTableSeparator;
             }
@@ -202,9 +196,6 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
             if (OracleRoll.Row.MultipleRolls != null)
             {
                 resultSeparator = SubtableSeparator;
-            }
-            if (OracleRoll.Rolls.AllowDuplicateRolls)
-            {
                 resultJoiner = DuplicateJoiner;
             }
             fieldNameRoll += resultSeparator + string.Join(
@@ -216,7 +207,7 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
                 OracleRoll.Rolls
             );
         }
-        var fieldName = OracleRoll.Row.DisplayPath + $" [{fieldNameRoll}]";
+        var fieldName = OracleRoll.Oracle.Path + $" [{fieldNameRoll}]";
         return new EmbedFieldBuilder()
             .WithName(fieldName)
             .WithValue(fieldValue)

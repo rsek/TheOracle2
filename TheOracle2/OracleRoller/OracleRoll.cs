@@ -5,42 +5,42 @@ using TheOracle2.UserContent;
 
 namespace TheOracle2.OracleRoller;
 
+/// <summary>
+/// Represents a single oracle roll, absent of context. In most cases you shouldn't construct this directly - instead, use OracleResult.
+/// </summary>
 public class OracleRoll : Die
 {
-    public OracleRoll(EFContext dbContext, Random random, string oracleId, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, dbContext.Oracles.Find(oracleId), roll)
+    public OracleRoll(EFContext dbContext, Random random, string tableId, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, dbContext.OracleTables.Find(tableId), roll)
     {
     }
-    public OracleRoll(EFContext dbContext, Random random, Oracle oracle, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, roll)
+    public OracleRoll(EFContext dbContext, Random random, OracleTable table, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, roll)
     {
-        if (oracle.Table == null || !oracle.Table.Any())
-        {
-            throw new Exception("Oracle must have a table to roll on; if it contains Oracles of its own, check the Tables of those instead.");
-        }
-        Oracle = oracle;
+        Console.WriteLine($"current dice value: {Value}");
+        Table = table;
         if (Row.MultipleRolls != null)
         {
-            Rolls = new OracleResult(DbContext, Random, Oracle, Row.MultipleRolls.Amount, Row.MultipleRolls.AllowDuplicates);
+            Rolls = new OracleResult(DbContext, Random, Table, Row.MultipleRolls.Amount);
         }
         if (Row.OracleRolls?.Any() == true)
         {
-            var referencedOracles = DbContext.Oracles.Where(oracle => Row.OracleRolls.Contains(oracle.Id));
-
-            Rolls = new OracleResult(DbContext, Random, referencedOracles, false);
+            // TODO: have the DB generate these references instead of trying to parse them.
+            var referencedTables = DbContext.OracleTables.Where(oracle => Row.OracleRolls.Contains(oracle.Path));
+            Rolls = new OracleResult(DbContext, Random, referencedTables);
         }
     }
     /// <summary>
     /// blacklist rows by result string
     /// </summary>
-    public OracleRoll(EFContext dbContext, Random random, Oracle oracle, IEnumerable<string> rowBlacklist) : this(dbContext, random, oracle, oracle.Table.Where(row => !rowBlacklist.Contains(row.Result)))
+    public OracleRoll(EFContext dbContext, Random random, OracleTable table, IEnumerable<string> rowBlacklist) : this(dbContext, random, table, table.Where(row => !rowBlacklist.Contains(row.Result)))
     {
     }
     /// <summary>
     /// blacklist rows by roll - if a row includes the value, it's excluded
     /// </summary>
-    public OracleRoll(EFContext dbContext, Random random, Oracle oracle, IEnumerable<int> rollBlacklist) : this(dbContext, random, oracle, oracle.Table.Where(row => !rollBlacklist.Any(blacklistedNumber => row.RollIsInRange(blacklistedNumber))))
+    public OracleRoll(EFContext dbContext, Random random, OracleTable table, IEnumerable<int> rollBlacklist) : this(dbContext, random, table, table.Where(row => !rollBlacklist.Any(blacklistedNumber => row.RollIsInRange(blacklistedNumber))))
     {
     }
-    private OracleRoll(EFContext dbContext, Random random, Oracle oracle, IEnumerable<RollableTableRow> whitelistedRows) : this(dbContext, random, oracle)
+    private OracleRoll(EFContext dbContext, Random random, OracleTable table, IEnumerable<OracleTableRow> whitelistedRows) : this(dbContext, random, table)
     {
         var filteredNumbers = BuildRollWhitelist(whitelistedRows);
         if (filteredNumbers?.Count == 0)
@@ -63,7 +63,7 @@ public class OracleRoll : Die
     /// <summary>
     /// Generates a list of permissable d100 rolls from a provided list of permissable rows.
     /// </summary>
-    private List<int> BuildRollWhitelist(IEnumerable<RollableTableRow> rowWhitelist)
+    private List<int> BuildRollWhitelist(IEnumerable<OracleTableRow> rowWhitelist)
     {
         var rowList = rowWhitelist.ToList();
         List<int> filteredNumbers = new();
@@ -81,11 +81,28 @@ public class OracleRoll : Die
     }
     public EFContext DbContext { get; set; }
     public Random Random { get; set; }
-    public Oracle Oracle { get; set; }
-    public RollableTableRow Row => this.Oracle.Table.Lookup(Value);
-
+    /// <summary>
+    /// The originating oracle of this roll (in other words, the last oracle ancestor of OracleRoll.Table).
+    /// </summary>
+    public Oracle Oracle => Table.Metadata;
+    /// <summary>
+    /// The originating table of this roll.
+    /// </summary>
+    public OracleTable Table { get; set; }
+    /// <summary>
+    /// The row data for this roll.
+    /// </summary>
+    public OracleTableRow Row => Table.Lookup(Value);
     /// <summary>
     /// For multiple roll results as with "Roll Twice" or "Action + Theme" results
     /// </summary>
     public OracleResult Rolls { get; set; }
+    public override string ToString()
+    {
+        // TODO: construct strings for multiple roll result.
+        // if (Rolls.Count > 0) {
+        //     return Row.ToString();
+        // }
+        return Row.ToString();
+    }
 }

@@ -4,59 +4,65 @@ using TheOracle2.GameObjects;
 using TheOracle2.UserContent;
 namespace TheOracle2.OracleRoller;
 /// <summary>
-/// Represents an oracle roll result composed of one or more oracle rolls.
+/// Represents an oracle result composed of one or more oracle rolls.
 /// </summary>
 public class OracleResult : List<OracleRoll>
 {
     /// <summary>
-    /// Create oracle rolls from several oracles at once.
+    /// Create oracle rolls from several oracle tables at once.
     /// </summary>
-    /// TODO: allowDuplicateRolls should be a function of the table - being able to set it at the oracle result level just complicates things.
-    public OracleResult(EFContext dbContext, Random random, IEnumerable<Oracle> oracles, bool allowDuplicateRolls = false) : this(dbContext, random, allowDuplicateRolls)
+    // public OracleResult(EFContext dbContext, Random random, IEnumerable<string> tableIds) : this(dbContext, random, dbContext.OracleTables.Where(table => tableIds.Contains(table.Path))) { }
+    /// <summary>
+    /// Create oracle rolls from several oracle tables at once.
+    /// </summary>
+    public OracleResult(EFContext dbContext, Random random, IEnumerable<OracleTable> tables) : this(dbContext, random)
     {
-        var oracleList = oracles.ToList();
-        for (int i = 0; i < oracles.Count(); i++)
+        var tableList = tables.ToList();
+        for (int i = 0; i < tables.Count(); i++)
         {
-            var oracle = oracleList[i];
-            if (!AllowDuplicateRolls && UsedRolls(oracle) != null && UsedRolls(oracle).Any())
+            var table = tableList[i];
+            var oracle = table.Metadata;
+            if (oracle.Usage?.AllowDuplicateRolls != true && UsedRolls(table) != null && UsedRolls(table).Any())
             {
                 // TODO: this should use proper row comparison instead, probably?
-                Add(new OracleRoll(dbContext, random, oracle, UsedRolls(oracle)));
+                Add(new OracleRoll(DbContext, Random, table, UsedRolls(table)));
                 continue;
             }
-            Add(new OracleRoll(dbContext, random, oracle));
+            Add(new OracleRoll(DbContext, Random, table));
         }
     }
     /// <summary>
-    /// Create one or more rolls from a single oracle
+    /// Create one or more oracle rolls from a single oracle (by its path/ID)
     /// </summary>
-    public OracleResult(EFContext dbContext, Random random, Oracle oracle, int amount = 1, bool allowDuplicateRolls = false) : this(dbContext, random, allowDuplicateRolls)
+    // public OracleResult(EFContext dbContext, Random random, string tableId, int amount = 1) : this(dbContext, random, dbContext.OracleTables.Find(tableId), amount) { }
+    /// <summary>
+    /// Create one or more oracle rolls from a single oracle
+    /// </summary>
+    public OracleResult(EFContext dbContext, Random random, OracleTable table, int amount = 1) : this(dbContext, random)
     {
         for (int i = 0; i < amount; i++)
         {
-            if (!AllowDuplicateRolls && i > 0 && UsedRolls(oracle).Count > 0)
+            if (table.Metadata.Usage?.AllowDuplicateRolls != true && i > 0 && UsedRolls(table)?.Count > 0)
             {
-                Add(new OracleRoll(dbContext, random, oracle, UsedRolls(oracle)));
+                Add(new OracleRoll(DbContext, Random, table, UsedRolls(table)));
                 continue;
             }
-            Add(new OracleRoll(dbContext, random, oracle));
+            Add(new OracleRoll(DbContext, Random, table));
         }
     }
     /// <summary>
     /// Create an empty oracle roll group.
     /// </summary>
-    public OracleResult(EFContext dbContext, Random random, bool allowDuplicateRolls = false)
+    public OracleResult(EFContext dbContext, Random random)
     {
         DbContext = dbContext;
         Random = random;
-        AllowDuplicateRolls = allowDuplicateRolls;
     }
-    public List<Oracle> Oracles => this.Select(oracleRoll => oracleRoll.Oracle).ToList();
     // TODO: actually implement stuff that uses this
-    public bool AllowDuplicateRolls { get; set; }
-    private List<int> UsedRolls(Oracle oracle)
+    public List<OracleTable> Tables => this.Select(oracleRoll => oracleRoll.Table).ToList();
+    private List<int> UsedRolls(OracleTable table)
     {
-        return this.Where(roll => roll.Oracle == oracle).Select(roll => roll.Value).ToList();
+        return this.Where(roll => roll.Table == table).Select(roll => roll.Value).ToList();
     }
     public EFContext DbContext { get; set; }
     public Random Random { get; set; }

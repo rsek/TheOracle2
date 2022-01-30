@@ -15,15 +15,13 @@ public class OracleUsage
     [DefaultValue(false)]
     public bool Initial { get; set; }
 
-    [JsonProperty("Max rolls")]
+    [JsonProperty("Max rolls", DefaultValueHandling = DefaultValueHandling.Populate)]
     [DefaultValue(1)]
     public int MaxRolls { get; set; }
 
-
-    [JsonProperty("Min rolls")]
+    [JsonProperty("Min rolls", DefaultValueHandling = DefaultValueHandling.Populate)]
     [DefaultValue(1)]
     public int MinRolls { get; set; }
-
 
     [JsonProperty("Allow duplicate rolls")]
     [DefaultValue(false)]

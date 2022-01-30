@@ -48,7 +48,7 @@ public class Die : IComparable<int>, IComparable<Die>
 
     private int Roll()
     {
-        return Random.Next(1, Sides + 1);
+        return this.Random.Next(1, Sides + 1);
     }
 
     /// <summary>

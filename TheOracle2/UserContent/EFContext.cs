@@ -19,9 +19,9 @@ public class EFContext : DbContext
     public DbSet<GuildPlayer> GuildPlayers { get; set; }
     public DbSet<Asset> Assets { get; set; }
     public DbSet<Move> Moves { get; set; }
-    // public DbSet<RollableTable> Tables { get; set; }
-    public DbSet<Oracle> Oracles { get; set; }
     public DbSet<OracleCategory> OracleCategories { get; set; }
+    public DbSet<OracleTable> OracleTables { get; set; }
+    public DbSet<OracleTableRow> OracleTableRows { get; set; }
     public DbSet<Ability> AssetAbilities { get; set; }
     public DbSet<PlayerCharacter> PlayerCharacters { get; set; }
 
@@ -64,80 +64,15 @@ public class EFContext : DbContext
         file = baseDir.GetFiles("oracles_next.json").FirstOrDefault();
 
         text = file.OpenText().ReadToEnd();
-        var oracleList = JsonConvert.DeserializeObject<List<OracleCategory>>(text);
-
-        foreach (var oracleCat in oracleList)
+        var oracleCatList = JsonConvert.DeserializeObject<List<OracleCategory>>(text);
+        foreach (var oracleCat in oracleCatList)
         {
-            await CrawlOracles(oracleCat);
+            Add(oracleCat);
         }
-    }
 
-
-    private async Task CrawlOracles(OracleCategory oracleCat)
-    {
-        // oracleCat.Id = oracleCat.Path + " /";
-        oracleCat.Id = oracleCat.Path;
-
-        if (oracleCat.Categories != null)
-        {
-            foreach (var oracleSubCat in oracleCat.Categories)
-            {
-                await CrawlOracles(oracleSubCat);
-            }
-        }
-        if (oracleCat.Oracles != null)
-        {
-            if (oracleCat.Name == "Move")
-            {
-                oracleCat.Oracles = oracleCat.Oracles.Where(item => item.Name != "Ask the Oracle").ToList();
-            }
-            foreach (var oracle in oracleCat.Oracles)
-            {
-                await CrawlOracles(oracle);
-            }
-        }
-        OracleCategories.Add(oracleCat);
         await SaveChangesAsync();
+        var thing = this;
     }
-    private async Task CrawlOracles(Oracle oracle)
-    {
-        oracle.Id = oracle.Path;
-        oracle.Parent = string.Join(" / ", oracle.Path.Split(" / ").SkipLast(1));
-        if (oracle.Oracles != null)
-        {
-            foreach (var subOracle in oracle.Oracles)
-            {
-                subOracle.SubtableOf = oracle.Path;
-                await CrawlOracles(subOracle);
-            }
-        }
-        if (oracle.Table != null && oracle.Table.Any())
-        {
-            await CrawlOracles(oracle.Table, oracle.Id);
-        }
-        Oracles.Add(oracle);
-        await SaveChangesAsync();
-    }
-    private async Task CrawlOracles(RollableTable table, string parentPath)
-    {
-        table.DisplayPath = parentPath;
-        table.Id = parentPath + " / Table";
-        foreach (var row in table)
-        {
-            await CrawlOracles(row, table.Id);
-        }
-        // await SaveChangesAsync();
-    }
-    private async Task CrawlOracles(RollableTableRow row, string parentPath)
-    {
-        row.Parent = parentPath;
-        if (row.Table != null)
-        {
-            var rowPathString = parentPath + $" / {row.Result}";
-            await CrawlOracles(row.Table, rowPathString);
-        }
-    }
-
     public bool HasTables() => Database.GetService<IRelationalDatabaseCreator>().HasTables();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -166,9 +101,6 @@ public class EFContext : DbContext
             c => c
             );
 
-        // modelBuilder.Entity<Subcategory>().HasOne(o => o.OracleInfo).WithMany(oi => oi.Subcategories).HasForeignKey(o => o.OracleInfoId).IsRequired();
-        // modelBuilder.Entity<Oracle>().HasOne(o => o.Subcategory).WithMany(sub => sub.Oracles).HasForeignKey(o => o.SubcategoryId).IsRequired(false);
-
         //TheOracle Stuff
         modelBuilder.Entity<PlayerCharacter>().Property(pc => pc.Impacts).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<GuildPlayer>().HasKey(guildPlayer => new { guildPlayer.UserId, guildPlayer.DiscordGuildId });
@@ -177,9 +109,11 @@ public class EFContext : DbContext
         modelBuilder.Entity<Ability>().Property(a => a.Input).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
 
         // for table rows
-        modelBuilder.Entity<RollableTableRow>().HasKey(row => new { row.Floor, row.Ceiling, row.Parent });
-        // could set a List<int> to every integer in that range, lol
+        // modelBuilder.Entity<OracleTableRow>().HasKey(row => row.Path);
 
+        // modelBuilder.Entity<OracleTable>().HasKey(table => table.Path);
+
+        // modelBuilder.Entity<Oracle>().HasKey();
 
         // Assets
         modelBuilder.Entity<Asset>().Property(a =>
@@ -193,38 +127,30 @@ public class EFContext : DbContext
         // modelBuilder.Entity<Attributes>().Property(a => a.DerelictType).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         // modelBuilder.Entity<Attributes>().Property(a => a.Location).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         // modelBuilder.Entity<Attributes>().Property(a => a.Type).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        modelBuilder.Entity<RollableTableRow>().Property(c =>
+        modelBuilder.Entity<OracleTableRow>().Property(c =>
             c.Assets).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        modelBuilder.Entity<RollableTableRow>().Property(c =>
+        modelBuilder.Entity<OracleTableRow>().Property(c =>
             c.OracleRolls).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        modelBuilder.Entity<RollableTableRow>().Property(c =>
+        modelBuilder.Entity<OracleTableRow>().Property(c =>
             c.PartOfSpeech).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
+
 
         modelBuilder.Entity<Requires>().Property(c => c.Paths).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<Requires>().Property(c => c.Results).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<RollableTableRow>().Property(c =>
-        //     c.AddTemplate).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
 
         modelBuilder.Entity<Suggestions>().Property(c => c.OracleRolls).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
 
         modelBuilder.Entity<ConditionMeter>().Property(c => c.Conditions).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Inherit>().Property(i => i.Exclude).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Inherit>().Property(i => i.Name).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Inherit>().Property(s => s.Requires).HasConversion(requiresConverter).Metadata.SetValueComparer(requiresComparer);
+
         modelBuilder.Entity<MoveStatOptions>().Property(a => a.Legacies).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<MoveStatOptions>().Property(a => a.Progress).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<MoveStatOptions>().Property(a => a.Stats).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<Oracle>().Property(o => o.Aliases).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Oracle>().Property(o => o.ContentTags).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Oracle>().Property(o => o.PartOfSpeech).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-        // modelBuilder.Entity<Oracle>().Property(s => s.Requires).HasConversion(requiresConverter).Metadata.SetValueComparer(requiresComparer);
         modelBuilder.Entity<Select>().Property(a => a.Options).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
 
         modelBuilder.Entity<OracleCategory>().Property(s => s.Aliases).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<OracleCategory>().Property(s => s.SampleNames).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
         modelBuilder.Entity<OracleCategory>().Property(s => s.SampleNames).HasConversion(stringArrayToCSVConverter).Metadata.SetValueComparer(valueComparer);
-
-
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
