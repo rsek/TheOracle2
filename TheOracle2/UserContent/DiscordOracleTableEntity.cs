@@ -24,16 +24,13 @@ internal class DiscordOracleTableEntity : IDiscordEntity
     public static SelectMenuOptionBuilder ToMenuOption(OracleTable table)
     {
         var option = new SelectMenuOptionBuilder()
-            .WithLabel($"{table.Path}")
-            .WithValue(DiscordOracleTableEntity.ToMenuOptionValue(table));
+            .WithLabel(table.Path)
+            .WithValue(ToMenuOptionValue(table));
         return option;
     }
     public SelectMenuOptionBuilder ToMenuOption()
     {
-        var option = new SelectMenuOptionBuilder()
-            .WithLabel($"{Table.Path}")
-            .WithValue(ToMenuOptionValue());
-        return option;
+        return ToMenuOption(Table);
     }
     public string ToMenuOptionValue()
     {
@@ -42,9 +39,9 @@ internal class DiscordOracleTableEntity : IDiscordEntity
     public static string ToMenuOptionValue(OracleTable table)
     {
         int remainingRolls = 1;
-        if (table.Metadata.Usage != null)
+        if (table.OracleInfo.Usage != null)
         {
-            remainingRolls = table.Metadata.Usage.Repeatable ? -1 : table.Metadata.Usage.MaxRolls;
+            remainingRolls = table.OracleInfo.Usage.Repeatable ? -1 : table.OracleInfo.Usage.MaxRolls;
         }
         return $"{remainingRolls},{table.Path}";
     }
@@ -56,25 +53,21 @@ internal class DiscordOracleTableEntity : IDiscordEntity
         }
         return menuBuilder;
     }
-    public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, IEnumerable<Oracle> oracles)
+    public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, IEnumerable<OracleTable> tables)
     {
-        return DecrementOracleOptions(menuBuilder, oracles.Select(oracle => oracle.Path));
+        return DecrementOracleOptions(menuBuilder, tables.Select(table => table.Path));
     }
 
     public static SelectMenuBuilder DecrementOracleOptions(SelectMenuBuilder menuBuilder, DiscordOracleResultEntity result)
     {
-        return DecrementOracleOptions(menuBuilder, result.Select(item => item.OracleRoll.Oracle));
+        return DecrementOracleOptions(menuBuilder, result.Select(item => item.OracleRoll.Table));
     }
-    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, Oracle oracle)
+    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, string tableId)
     {
-        return DecrementOracleOption(menuBuilder, oracle.Path);
-    }
-    public static SelectMenuBuilder DecrementOracleOption(SelectMenuBuilder menuBuilder, string oracleId)
-    {
-        var targetIndex = menuBuilder.Options.FindIndex(option => option.Value.StartsWith(oracleId) || option.Label == oracleId);
+        var targetIndex = menuBuilder.Options.FindIndex(option => option.Value.StartsWith(tableId) || option.Label == tableId);
         if (targetIndex == -1)
         {
-            throw new ArgumentException($"The oracle could not be found in the selectmenu: {oracleId}");
+            throw new ArgumentException($"The oracle could not be found in the selectmenu: {tableId}");
         }
         var targetOption = menuBuilder.Options[targetIndex];
         var rollsLeftString = targetOption.Value.Split(",")[0];
@@ -89,7 +82,7 @@ internal class DiscordOracleTableEntity : IDiscordEntity
         {
             // if there's at least one roll left, decrement and update the option's value
             rollsLeft--;
-            var newValue = $"{rollsLeft},{oracleId}";
+            var newValue = $"{rollsLeft},{tableId}";
             menuBuilder.Options[targetIndex] = menuBuilder.Options[targetIndex].WithValue(newValue);
         }
         if (rollsLeft == 0)

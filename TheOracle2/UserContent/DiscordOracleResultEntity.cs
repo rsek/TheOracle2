@@ -76,7 +76,7 @@ internal class DiscordOracleResultEntity : List<DiscordOracleRollEntity>, IDisco
     public List<OracleTable> GetSiblingTables()
     {
         // TODO: filter for stuff what's already been rolled against
-        return OracleResult.Tables.SelectMany(table => table.Category.TablesWithin).Distinct().ToList();
+        return OracleResult.Tables.SelectMany(table => table.Category.TablesWithin()).Distinct().ToList();
     }
     public MessageComponent GetComponents()
     {

@@ -21,7 +21,7 @@ public class OracleResult : List<OracleRoll>
         for (int i = 0; i < tables.Count(); i++)
         {
             var table = tableList[i];
-            var oracle = table.Metadata;
+            var oracle = table.OracleInfo;
             if (oracle.Usage?.AllowDuplicateRolls != true && UsedRolls(table) != null && UsedRolls(table).Any())
             {
                 // TODO: this should use proper row comparison instead, probably?
@@ -42,7 +42,7 @@ public class OracleResult : List<OracleRoll>
     {
         for (int i = 0; i < amount; i++)
         {
-            if (table.Metadata.Usage?.AllowDuplicateRolls != true && i > 0 && UsedRolls(table)?.Count > 0)
+            if (table.OracleInfo?.Usage?.AllowDuplicateRolls != true && i > 0 && UsedRolls(table)?.Count > 0)
             {
                 Add(new OracleRoll(DbContext, Random, table, UsedRolls(table)));
                 continue;

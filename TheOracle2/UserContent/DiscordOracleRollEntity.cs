@@ -178,40 +178,68 @@ internal class DiscordOracleRollEntity : IDiscordEntityField
     /// String used to join subresults where duplicates are allowed.
     /// TODO: account for ironsworn-style "roll twice and make it worse" results
     const string DuplicateJoiner = ", ";
-    public EmbedFieldBuilder ToEmbedField()
+
+    string Joiner
     {
-        var fieldNameRoll = OracleRoll.Value.ToString();
-        var fieldValue = OracleRoll.Row.ToString();
-        if (OracleRoll.Rolls != null && OracleRoll.Rolls?.Count > 0)
+        get
         {
-            string resultSeparator = ForeignTableSeparator;
-            // for rolls that don't (or can't, like action+theme) allow duplicates
-            string resultJoiner = NonDuplicateJoiner;
-            // to same table (e.g. 'roll twice'): " > "?? ": "???
-            if (OracleRoll.Table != null)
-            {
-                resultSeparator = SameTableSeparator;
-            }
-            // to table embedded in row: " / "
+            string joiner = NonDuplicateJoiner;
             if (OracleRoll.Row.MultipleRolls != null)
             {
-                resultSeparator = SubtableSeparator;
-                resultJoiner = DuplicateJoiner;
+                joiner = DuplicateJoiner;
             }
-            fieldNameRoll += resultSeparator + string.Join(
-                resultJoiner,
+            return joiner;
+        }
+    }
+    string Separator
+    {
+        get
+        {
+            string separator = ForeignTableSeparator;
+            if (OracleRoll.Table != null)
+            {
+                separator = SameTableSeparator;
+            }
+            if (OracleRoll.Row.MultipleRolls != null)
+            {
+                separator = SubtableSeparator;
+            }
+            return separator;
+        }
+    }
+    string ToRollString()
+    {
+        var dieValueString = OracleRoll.Value.ToString();
+        if (OracleRoll.Rolls?.Any() == true)
+        {
+            dieValueString += Separator + string.Join(
+                Joiner,
                 OracleRoll.Rolls.Select(item => item.Value)
             );
-            fieldValue += resultSeparator + string.Join(
-                resultJoiner,
-                OracleRoll.Rolls
-            );
         }
-        var fieldName = OracleRoll.Oracle.Path + $" [{fieldNameRoll}]";
+        var fieldName = OracleRoll.Table.Path + $" [{dieValueString}]";
+        return fieldName;
+    }
+    string ToResultString()
+    {
+        var fieldValue = OracleRoll.Row.ToString();
+        if (OracleRoll.Rolls?.Any() == true)
+        {
+            fieldValue += Separator + string.Join(Joiner, OracleRoll.Rolls);
+        }
+        return fieldValue;
+    }
+    public EmbedFieldBuilder ToEmbedField()
+    {
+
         return new EmbedFieldBuilder()
-            .WithName(fieldName)
-            .WithValue(fieldValue)
+            .WithName(ToRollString())
+            .WithValue(ToResultString())
             .WithIsInline(true)
             ;
+    }
+    public override string ToString()
+    {
+        return ToRollString();
     }
 }

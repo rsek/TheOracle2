@@ -29,7 +29,7 @@ public class OracleAutocomplete : AutocompleteHandler
             {
                 return result;
             }
-            var list = Db.OracleTables.Where(table =>
+            var list = DbContext.OracleTables.Where(table =>
                 defaultKeys.Contains(table.Path)
             ).AsEnumerable()
                 .Select(table => new AutocompleteResult(table.Path, table.Path))
@@ -44,7 +44,7 @@ public class OracleAutocomplete : AutocompleteHandler
         }
     }
 
-    public EFContext Db { get; set; }
+    public EFContext DbContext { get; set; }
     public ILogger<OracleAutocomplete> logger { get; set; }
 
     public override Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
@@ -53,14 +53,16 @@ public class OracleAutocomplete : AutocompleteHandler
         {
             List<AutocompleteResult> successList = new List<AutocompleteResult>();
 
-            var value = autocompleteInteraction.Data.Current.Value as string;
+            var userText = autocompleteInteraction.Data.Current.Value as string;
 
-            if (string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(userText))
             {
                 return emptyOraclesResult;
             }
-            successList = Db.OracleTables.Select(table => new AutocompleteResult(table.Metadata.Path, table.Metadata.Path)).ToList();
-            // TODO: have it check any Aliases too
+            /// appears to be pointing at info - weird!
+            successList = DbContext.OracleTables
+            .Where(table => Regex.IsMatch(table.Path, $@"\b(?i){userText}"))
+            .Select(table => new AutocompleteResult(table.Path, table.Path)).ToList();
             return Task.FromResult(AutocompletionResult.FromSuccess(successList.Take(SelectMenuBuilder.MaxOptionCount)));
         }
         catch (Exception ex)

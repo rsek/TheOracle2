@@ -26,7 +26,7 @@ namespace TheOracle2.UserContent
                 compBuilder ??= new ComponentBuilder();
 
                 var select = new SelectMenuBuilder()
-                    .WithCustomId($"asset-ability-select:{asset.Id}")
+                    .WithCustomId($"asset-ability-select:{asset}")
                     .WithPlaceholder($"Ability Selection")
                     .WithMinValues(0)
                     .WithMaxValues(asset.Abilities.Count);
@@ -54,7 +54,7 @@ namespace TheOracle2.UserContent
                 compBuilder ??= new ComponentBuilder();
 
                 compBuilder.WithSelectMenu(new SelectMenuBuilder()
-                    .WithCustomId($"asset-counter-select:{asset.Id}")
+                    .WithCustomId($"asset-counter-select:{asset}")
                     .WithPlaceholder($"{asset.Counter.Name} actions")
                     .WithMinValues(1)
                     .WithMaxValues(1)
@@ -70,7 +70,7 @@ namespace TheOracle2.UserContent
 
                 //todo: show condition in select?
                 var select = new SelectMenuBuilder()
-                    .WithCustomId($"asset-condition-select:{asset.Id}")
+                    .WithCustomId($"asset-condition-select:{asset}")
                     .WithPlaceholder($"{asset.ConditionMeter.Name} actions")
                     .WithMinValues(1)
                     .WithMaxValues(1)

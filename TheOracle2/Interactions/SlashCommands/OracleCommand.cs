@@ -24,16 +24,16 @@ public class OracleCommand : InteractionModuleBase
         var tableData = await DbContext.OracleTables.FindAsync(table);
         Console.WriteLine($"Received request for: {table}.");
 
-        var resultEntity = new DiscordOracleResultEntity(DbContext, Random, tableData);
+        var resultEntity = new DiscordOracleResultEntity(DbContext, Random, tableData.OracleInfo.Table);
 
         var embeds = resultEntity.GetEmbeds();
         var components = resultEntity.GetComponents();
 
         await RespondAsync(
         // await FollowupAsync(
-        embeds: embeds,
-        // ephemeral: resultEntity.IsEphemeral,
-        components: components
+            embeds: embeds,
+            // ephemeral: resultEntity.IsEphemeral,
+            components: components
         ).ConfigureAwait(false);
     }
 }

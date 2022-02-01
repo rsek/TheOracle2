@@ -10,12 +10,11 @@ namespace TheOracle2.OracleRoller;
 /// </summary>
 public class OracleRoll : Die
 {
-    public OracleRoll(EFContext dbContext, Random random, string tableId, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, dbContext.OracleTables.Find(tableId), roll)
+    public OracleRoll(EFContext dbContext, Random random, string tableId, int? roll = null, IEnumerable<int> secondaryRolls = null) : this(dbContext, random, dbContext.OracleTables.Find(tableId), roll)
     {
     }
-    public OracleRoll(EFContext dbContext, Random random, OracleTable table, int? roll = null, int[] secondaryRolls = null) : this(dbContext, random, roll)
+    public OracleRoll(EFContext dbContext, Random random, OracleTable table, int? roll = null, IEnumerable<int> secondaryRolls = null) : this(dbContext, random, roll)
     {
-        Console.WriteLine($"current dice value: {Value}");
         Table = table;
         if (Row.MultipleRolls != null)
         {
@@ -84,7 +83,7 @@ public class OracleRoll : Die
     /// <summary>
     /// The originating oracle of this roll (in other words, the last oracle ancestor of OracleRoll.Table).
     /// </summary>
-    public Oracle Oracle => Table.Metadata;
+    public OracleInfo OracleInfo => Table.OracleInfo;
     /// <summary>
     /// The originating table of this roll.
     /// </summary>

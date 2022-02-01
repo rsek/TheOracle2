@@ -1,31 +1,44 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace TheOracle2.DataClasses;
+
+[Index(nameof(TableId), nameof(Floor), nameof(Ceiling), IsUnique = true, Name = "Index_TableRow")]
 public class OracleTableRow
 {
+    // [JsonIgnore]
+    // [Key]
+    public string Id { get; set; }
     /// <summary>
     /// A string representation of the path to this object. This is generated when building the DBset, not pulled from the JSON.
     /// </summary>
     [JsonIgnore]
-    [Key]
     public string Path { get; set; }
+    // [JsonIgnore]
+    // public int Id { get; set; }
     /// <summary>
     /// The nearest Oracle ancestor of this object.
     /// </summary>
     [JsonIgnore]
-    public virtual Oracle Metadata { get; set; }
+    public virtual OracleInfo OracleInfo { get; set; }
+    [JsonIgnore]
+    public string OracleInfoId { get; set; }
     /// <summary>
     /// The nearest OracleCategory ancestor of this object.
     /// </summary>
     [JsonIgnore]
     public virtual OracleCategory Category { get; set; }
+    [JsonIgnore]
+    public string CategoryId { get; set; }
     /// <summary>
     /// The nearest RollableTable ancestor of this object.
     /// </summary>
     [JsonIgnore]
     public virtual OracleTable RowOf { get; set; }
+    [JsonIgnore]
+    public string TableId { get; set; }
     public virtual bool RollIsInRange(int roll)
     {
         if (roll >= Floor && roll <= Ceiling) { return true; }
@@ -66,19 +79,18 @@ public class OracleTableRow
     public virtual IList<string> PartOfSpeech { get; set; }
 
     public virtual IList<string> Assets { get; set; }
-
-    public virtual OracleTable Table { get; set; }
+    [JsonProperty("Table")]
+    public virtual OracleTable Subtable { get; set; }
+    public virtual string SubtableId { get; set; }
 
     // [JsonProperty("Add template")]
     // public virtual AddTemplate AddTemplate { get; set; }
 
     public string Image { get; set; }
-    internal virtual void BuildAncestry(OracleTable parent)
-    {
-        RowOf = parent;
-        Path = parent.Path + $" / {parent.IndexOf(this)}";
-        Category = parent.Category;
-        Metadata = parent.Metadata;
-        if (Table?.Count > 0) { Table?.BuildAncestry(this); }
-    }
+    // [JsonConstructor]
+    // public OracleTableRow()
+    // {
+    //     Id = $"{Path} [{Ceiling}]";
+    // }
+
 }

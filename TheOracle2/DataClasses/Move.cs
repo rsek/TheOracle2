@@ -1,16 +1,21 @@
-﻿using TheOracle2.UserContent;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+
+using TheOracle2.UserContent;
 
 namespace TheOracle2.DataClasses;
 
 public class Move
 {
-    public string Id { get; set; }
-
     [JsonIgnore]
+    [Key]
+    public string Id { get; set; }
+    public string Name { get; set; }
+
+    // [JsonIgnore]
     // public virtual IList<OracleGuild> OracleGuilds { get; set; }
 
     public string Category { get; set; }
-    public string Name { get; set; }
     public bool Oracle { get; set; }
 
     [JsonProperty("Progress Move")]
@@ -20,7 +25,12 @@ public class Move
     public string TriggerText { get; set; }
 
     public string Text { get; set; }
-    public virtual List<MoveTrigger> Triggers { get; set; }
+    public virtual IList<MoveTrigger> Triggers { get; set; }
+    [OnDeserialized]
+    internal void OnDeserializedMethod(StreamingContext context)
+    {
+        Id = Name;
+    }
 }
 
 public class MovesInfo
@@ -37,13 +47,12 @@ public class MoveStatOptions
 {
     [JsonIgnore]
     public int Id { get; set; }
-
-    public string Method { get; set; }
+    public string Select { get; set; }
     public IList<string> Stats { get; set; }
-
-    public IList<string> Progress { get; set; }
-
+    public IList<string> Resources { get; set; }
+    public virtual IList<Special> Special { get; set; }
     public IList<string> Legacies { get; set; }
+    public string Selection { get; set; }
 }
 
 public class MoveTrigger

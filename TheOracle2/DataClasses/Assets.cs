@@ -1,6 +1,53 @@
-﻿using TheOracle2.UserContent;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using TheOracle2.UserContent;
 
 namespace TheOracle2.DataClasses;
+
+
+public record Asset
+{
+    [JsonIgnore]
+    [Key]
+    public string Id { get; set; }
+    public string Name { get; set; }
+
+    // [JsonIgnore]
+    // public virtual IList<OracleGuild> OracleGuilds { get; set; }
+
+    public virtual IList<Ability> Abilities { get; set; }
+
+    public virtual IList<string> Aliases { get; set; }
+
+    [JsonProperty("Asset Type")]
+    public string AssetType { get; set; }
+
+    [JsonProperty("Condition Meter")]
+    public virtual ConditionMeter ConditionMeter { get; set; }
+
+    public virtual Counter Counter { get; set; }
+
+    public string Description { get; set; }
+
+    public IList<string> Input { get; set; }
+
+    public bool Modules { get; set; }
+
+
+    public virtual Select Select { get; set; }
+
+    public virtual Track Track { get; set; }
+
+    public override string ToString()
+    {
+        return Name;
+    }
+    [OnDeserialized]
+    internal void OnDeserializedMethod(StreamingContext context)
+    {
+        Id = Name;
+    }
+}
 
 public record Ability
 {
@@ -56,85 +103,14 @@ public record AssetRoot
     public IList<string> Tags { get; set; }
 }
 
-public record Asset
+public class AssetTrigger : MoveTrigger
 {
-    [JsonIgnore]
-    public string Id { get; set; }
-
-    // [JsonIgnore]
-    // public virtual IList<OracleGuild> OracleGuilds { get; set; }
-
-    [JsonProperty("Abilities")]
-    public virtual IList<Ability> Abilities { get; set; }
-
-    [JsonProperty("Aliases")]
-    public IList<string> Aliases { get; set; }
-
-    [JsonProperty("Asset Type")]
-    public string AssetType { get; set; }
-
-    [JsonProperty("Condition Meter")]
-    public virtual ConditionMeter ConditionMeter { get; set; }
-
-    [JsonProperty("Counter")]
-    public virtual Counter Counter { get; set; }
-
-    [JsonProperty("Description")]
-    public string Description { get; set; }
-
-    [JsonProperty("Input")]
-    public IList<string> Input { get; set; }
-
-    public bool Modules { get; set; }
-
-    [JsonProperty("Name")]
-    public string Name { get; set; }
-
-    [JsonProperty("Select")]
-    public virtual Select Select { get; set; }
-
-    [JsonProperty("Track")]
-    public virtual Track Track { get; set; }
-}
-
-public class AssetStatOptions
-{
-    [JsonIgnore]
-    public int Id { get; set; }
-
-    public string Select { get; set; }
-    public IList<string> Stats { get; set; }
-    public IList<string> Resources { get; set; }
-    public virtual IList<Special> Special { get; set; }
-    public IList<string> Legacies { get; set; }
-    public string Selection { get; set; }
-}
-
-public class AssetTrigger
-{
-    [JsonIgnore]
-    public int Id { get; set; }
-
-    public string Details { get; set; }
-    public string Text { get; set; }
-
-    [JsonProperty("Stat Options")]
-    public virtual AssetStatOptions StatOptions { get; set; }
-}
-
-public class AssetMove
-{
-    [JsonIgnore]
-    public int Id { get; set; }
-
-    public string Name { get; set; }
-    public string Category { get; set; }
     public string Asset { get; set; }
-    public virtual IList<AssetTrigger> Triggers { get; set; }
-    public string Text { get; set; }
+}
 
-    [JsonProperty("Progress Move")]
-    public bool ProgressMove { get; set; }
+public class AssetMove : Move
+{
+    public string Asset { get; set; }
 }
 
 public record ConditionMeter
@@ -168,13 +144,10 @@ public record Track
 {
     [JsonIgnore]
     public int Id { get; set; }
-    [JsonProperty("Name")]
     public string Name { get; set; }
 
     [JsonProperty("Starts At")]
     public int StartsAt { get; set; }
-
-    [JsonProperty("Value")]
     public int Value { get; set; }
 }
 
